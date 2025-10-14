@@ -7,7 +7,7 @@ import {
   IconMapPin, 
   IconBriefcase,
   IconEdit,
-  IconSave,
+  IconDeviceFloppy,
   IconX,
   IconTrophy,
   IconCalendar
@@ -62,7 +62,7 @@ function Profile() {
       <div className="max-w-6xl mx-auto px-6">
         
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 mt-16">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">My Profile</h1>
           <p className="text-xl text-white/70">Manage your account and track your progress</p>
         </div>
@@ -93,7 +93,7 @@ function Profile() {
                       onClick={handleSave}
                     >
                       <div className="flex items-center space-x-2">
-                        <IconSave className="w-4 h-4" />
+                        <IconDeviceFloppy className="w-4 h-4" />
                         <span>Save</span>
                       </div>
                     </Button>

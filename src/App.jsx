@@ -3,22 +3,19 @@ import { BrowserRouter as Router, Routes, Route, Link, useNavigate, Navigate, us
 import { FloatingDock } from './components/ui/floating-deck'
 import DarkVeil from './components/ui/dark-veil'
 import {Button} from './components/ui/moving-border'
-import { IconHome, IconUser, IconBriefcase, IconMail, IconCode } from '@tabler/icons-react'
+import { IconHome, IconUser, IconCode, IconChartBar } from '@tabler/icons-react'
 import Home from './pages/Home'
-import About from './pages/About'
-import Projects from './pages/Projects'
-import Experience from './pages/Experience'
-import Contact from './pages/Contact'
+import Profile from './pages/Profile'
+import Interview from './pages/Interview'
+import InterviewSession from './pages/InterviewSession'
+import Reports from './pages/Reports'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+
 
 function Navigation({ isLoggedIn, handleLogout, dockItems }) {
   const location = useLocation();
   
-  if (location.pathname === '/login' || location.pathname === '/signup') {
-    return null;
-  }
-
   return (
     <div className="absolute top-5 left-0 w-full z-50">
       <div className="flex items-center justify-between px-8 py-4 w-full">
@@ -67,6 +64,7 @@ function Navigation({ isLoggedIn, handleLogout, dockItems }) {
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
   const handleLogin = () => {
     setIsLoggedIn(true);
   }
@@ -81,24 +79,19 @@ function App() {
       href: "/",
     },
     {
-      title: "About",
+      title: "Profile",
       icon: <IconUser className="h-full w-full text-neutral-600 dark:text-neutral-300" />,
-      href: "/about",
+      href: "/profile",
     },
     {
-      title: "Projects",
+      title: "Interview",
       icon: <IconCode className="h-full w-full text-neutral-600 dark:text-neutral-300" />,
-      href: "/projects",
+      href: "/interview",
     },
     {
-      title: "Experience",
-      icon: <IconBriefcase className="h-full w-full text-neutral-600 dark:text-neutral-300" />,
-      href: "/experience",
-    },
-    {
-      title: "Contact",
-      icon: <IconMail className="h-full w-full text-neutral-600 dark:text-neutral-300" />,
-      href: "/contact",
+      title: "Reports",
+      icon: <IconChartBar className="h-full w-full text-neutral-600 dark:text-neutral-300" />,
+      href: "/reports",
     },
   ];
 
@@ -117,10 +110,10 @@ function App() {
         <div className="relative z-40 w-full">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/about" element={isLoggedIn ? <About /> : <Navigate to="/login" replace />} />
-            <Route path="/projects" element={isLoggedIn ? <Projects /> : <Navigate to="/login" replace />} />
-            <Route path="/experience" element={isLoggedIn ? <Experience /> : <Navigate to="/login" replace />} />
-            <Route path="/contact" element={isLoggedIn ? <Contact /> : <Navigate to="/login" replace />} />
+            <Route path="/profile" element={isLoggedIn ? <Profile /> : <Navigate to="/login" replace />} />
+            <Route path="/interview" element={isLoggedIn ? <Interview /> : <Navigate to="/login" replace />} />
+            <Route path="/interview-session" element={isLoggedIn ? <InterviewSession /> : <Navigate to="/login" replace />} />
+            <Route path="/reports" element={isLoggedIn ? <Reports /> : <Navigate to="/login" replace />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/signup" element={<Signup onLogin={handleLogin} />} />
           </Routes>

@@ -266,7 +266,7 @@ function Home() {
             <h2 className="text-3xl font-bold text-white mb-4">Ready to Ace Your Next Interview?</h2>
             <p className="text-xl text-white/70 mb-8">Join thousands of professionals improving their interview skills</p>
             
-            <Link to="/login">
+            <Link to="/interview">
               <Button
                 borderRadius="1rem"
                 className="bg-white/10 backdrop-blur-md text-white border-white/20 hover:bg-white/20 transition-all duration-300 px-4 py-2 text-sm font-medium cursor-pointer"

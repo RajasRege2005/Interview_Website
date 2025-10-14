@@ -17,7 +17,7 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-md p-10 rounded-3xl border border-white/20 shadow-2xl w-full max-w-md">
+      <div className="bg-white/10 backdrop-blur-md p-10 rounded-3xl border border-white/20 shadow-2xl w-full max-w-md mt-10">
         <div className="text-center mb-8">
           <h2 className="text-white text-4xl font-bold mb-2">Welcome Back</h2>
           <p className="text-white/70 text-lg">Sign in to your account</p>

@@ -5,13 +5,13 @@ import {
   IconEye, 
   IconMicrophone, 
   IconBrain, 
-  IconChart, 
+  IconChartBar, 
   IconDownload,
   IconArrowLeft,
   IconStar,
   IconTrendingUp,
-  IconAlertCircle,
-  IconCheckCircle
+  IconAlertTriangle,
+  IconCircleCheck
 } from '@tabler/icons-react';
 
 const Reports = () => {
@@ -242,7 +242,7 @@ Feedback: ${q.feedback.join(', ')}
       <div className="max-w-7xl mx-auto px-6">
         
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 mt-16">
           <button
             onClick={() => navigate('/interview')}
             className="flex items-center space-x-2 text-white/70 hover:text-white transition-colors"
@@ -260,7 +260,7 @@ Feedback: ${q.feedback.join(', ')}
           
           <Button
             borderRadius="1rem"
-            className="bg-white/10 text-white px-4 py-2 hover:bg-white/20 transition-all duration-300"
+            className="bg-white/10 text-white px-4 py-2 hover:bg-white/20 transition-all duration-300 cursor-pointer"
             onClick={downloadReport}
           >
             <div className="flex items-center space-x-2">
@@ -291,7 +291,7 @@ Feedback: ${q.feedback.join(', ')}
         {/* Tabs */}
         <div className="flex flex-wrap justify-center gap-2 mb-8">
           {[
-            { id: 'overview', label: 'Overview', icon: IconChart },
+            { id: 'overview', label: 'Overview', icon: IconChartBar },
             { id: 'detailed', label: 'Detailed Analysis', icon: IconBrain },
             { id: 'questions', label: 'Question Analysis', icon: IconMicrophone },
             { id: 'insights', label: 'Insights & Tips', icon: IconTrendingUp }
@@ -345,7 +345,7 @@ Feedback: ${q.feedback.join(', ')}
                 </div>
                 
                 <div className="bg-white/5 p-6 rounded-xl">
-                  <IconChart className="w-8 h-8 text-blue-400 mb-3" />
+                  <IconChartBar className="w-8 h-8 text-blue-400 mb-3" />
                   <h4 className="font-semibold text-white mb-2">Questions Answered</h4>
                   <p className="text-white/70">{reportData.questionAnalysis.length} Questions</p>
                 </div>
@@ -412,7 +412,7 @@ Feedback: ${q.feedback.join(', ')}
                     <div className="space-y-1">
                       {question.feedback.map((feedback, i) => (
                         <div key={i} className="flex items-center space-x-2">
-                          <IconCheckCircle className="w-4 h-4 text-green-400" />
+                          <IconCircleCheck className="w-4 h-4 text-green-400" />
                           <span className="text-white/70 text-sm">{feedback}</span>
                         </div>
                       ))}
@@ -432,7 +432,7 @@ Feedback: ${q.feedback.join(', ')}
                 {/* Strengths */}
                 <div>
                   <div className="flex items-center space-x-2 mb-4">
-                    <IconCheckCircle className="w-6 h-6 text-green-400" />
+                    <IconCircleCheck className="w-6 h-6 text-green-400" />
                     <h4 className="text-xl font-semibold text-white">Your Strengths</h4>
                   </div>
                   <div className="space-y-3">
@@ -447,7 +447,7 @@ Feedback: ${q.feedback.join(', ')}
                 {/* Improvements */}
                 <div>
                   <div className="flex items-center space-x-2 mb-4">
-                    <IconAlertCircle className="w-6 h-6 text-orange-400" />
+                    <IconAlertTriangle className="w-6 h-6 text-orange-400" />
                     <h4 className="text-xl font-semibold text-white">Areas for Improvement</h4>
                   </div>
                   <div className="space-y-3">
@@ -490,7 +490,7 @@ Feedback: ${q.feedback.join(', ')}
         <div className="text-center mt-8">
           <Button
             borderRadius="1rem"
-            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-8 py-4 text-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
+            className="bg-white/10 text-white px-4 py-2 hover:bg-white/20 transition-all duration-300 cursor-pointer"
             onClick={() => navigate('/interview')}
           >
             Start Another Interview

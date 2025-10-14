@@ -38,7 +38,7 @@ const Signup = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-md p-10 rounded-3xl border border-white/20 shadow-2xl w-full max-w-md">
+      <div className="bg-white/10 backdrop-blur-md p-10 rounded-3xl border border-white/20 shadow-2xl w-full max-w-md mt-28">
         <div className="text-center mb-8">
           <h2 className="text-white text-4xl font-bold mb-2">Create Account</h2>
           <p className="text-white/70 text-lg">Join us today</p>
@@ -99,7 +99,7 @@ const Signup = ({ onLogin }) => {
           
           <Button 
             borderRadius="0.75rem"
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-4 font-semibold cursor-pointer transition-all duration-300 transform hover:scale-105 "
+            className="bg-white/10 backdrop-blur-md text-white border-white/20 hover:bg-white/20 transition-all duration-300 px-4 py-2 text-sm font-medium cursor-pointer "
             onClick={handleSubmit}
           >
             Create Account

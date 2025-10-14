@@ -1,186 +1,365 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/moving-border';
-import { 
-  IconMicrophone, 
-  IconMicrophoneOff, 
-  IconVideo, 
-  IconVideoOff,
-  IconClock,
-  IconCheck,
-  IconArrowLeft,
-  IconDownload,
-  IconPlayerRecord,
-  IconPlayerStop
-} from '@tabler/icons-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const InterviewSession = () => {
-  const { sessionId } = useParams();
+function InterviewSession() {
   const location = useLocation();
   const navigate = useNavigate();
+  const category = location.state?.category || 'Behavioral Interviews';
   
-  // Get interview data from navigation state
-  const { category, questions, title } = location.state || {};
-  
-  // Session state
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [phase, setPhase] = useState('preparation'); // 'preparation', 'recording', 'completed'
-  const [timeLeft, setTimeLeft] = useState(60); // 60 seconds prep time
+  const [sessionPhase, setSessionPhase] = useState('question'); // question, preparation, recording, completed
+  const [timeLeft, setTimeLeft] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [recordings, setRecordings] = useState([]);
-  const [transcripts, setTranscripts] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState('');
+  const [recordedBlob, setRecordedBlob] = useState(null);
+  const [transcript, setTranscript] = useState('');
+  const [aiAnalysis, setAiAnalysis] = useState(null);
   
-  // Refs for media
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
-  const recordedChunksRef = useRef([]);
+  const recognitionRef = useRef(null);
+  const timerRef = useRef(null);
 
-  // Timer effect
-  useEffect(() => {
-    let timer;
-    if (timeLeft > 0 && (phase === 'preparation' || phase === 'recording')) {
-      timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-    } else if (timeLeft === 0) {
-      handlePhaseTransition();
+  const behavioralQuestions = [
+    "Tell me about a time when you had to work under pressure. How did you handle it?",
+    "Describe a situation where you had to resolve a conflict with a team member.",
+    "Give me an example of a goal you reached and tell me how you achieved it.",
+    "Tell me about a time when you made a mistake. How did you handle it?",
+    "Describe a time when you had to learn something new quickly.",
+    "Tell me about a time when you had to give difficult feedback to someone.",
+    "Describe a situation where you had to adapt to a significant change at work.",
+    "Give me an example of how you worked effectively under pressure."
+  ];
+
+  const technicalQuestions = [
+    "Explain how you would optimize the performance of a web application.",
+    "Describe your approach to debugging a complex technical issue.",
+    "How would you design a scalable system for handling millions of users?",
+    "Explain the difference between SQL and NoSQL databases and when you'd use each.",
+    "Describe your experience with version control systems like Git.",
+    "How do you ensure code quality and maintainability in your projects?",
+    "Explain your approach to testing and quality assurance.",
+    "Describe how you would implement security best practices in a web application."
+  ];
+
+  const situationalQuestions = [
+    "How would you handle a situation where you disagree with your manager's decision?",
+    "What would you do if you were assigned a project with an unrealistic deadline?",
+    "How would you approach a situation where a team member is not contributing?",
+    "What would you do if you discovered an error in a product that's already been released?",
+    "How would you handle a difficult client or customer?",
+    "What would you do if you had to present to a group and you're nervous about public speaking?",
+    "How would you prioritize multiple urgent tasks?",
+    "What would you do if you had to work with limited resources?"
+  ];
+
+  const getRandomQuestion = (category) => {
+    let questions;
+    switch (category) {
+      case 'Technical Interviews':
+        questions = technicalQuestions;
+        break;
+      case 'Situational Interviews':
+        questions = situationalQuestions;
+        break;
+      default:
+        questions = behavioralQuestions;
     }
-    return () => clearTimeout(timer);
-  }, [timeLeft, phase]);
-
-  // Initialize camera and microphone
-  useEffect(() => {
-    initializeMedia();
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
-  const initializeMedia = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
-      console.error('Error accessing media devices:', error);
-      alert('Please allow camera and microphone access to continue with the interview.');
-    }
+    return questions[Math.floor(Math.random() * questions.length)];
   };
 
-  const handlePhaseTransition = () => {
-    if (phase === 'preparation') {
-      setPhase('recording');
-      setTimeLeft(120); // 2 minutes for recording
-      startRecording();
-    } else if (phase === 'recording') {
-      stopRecording();
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setPhase('preparation');
-        setTimeLeft(60);
-      } else {
-        setPhase('completed');
+  useEffect(() => {
+    // Set random question when component mounts
+    setCurrentQuestion(getRandomQuestion(category));
+    
+    // Cleanup function to clean up everything on unmount
+    return () => {
+      // Clear timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
+      
+      // Stop speech recognition
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          console.log('Recognition cleanup');
+        }
+        recognitionRef.current = null;
+      }
+      
+      // Stop media recorder
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (e) {
+          console.log('MediaRecorder cleanup');
+        }
+        mediaRecorderRef.current = null;
+      }
+      
+      // Stop all media tracks (camera and microphone)
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
+        });
+        streamRef.current = null;
+      }
+      
+      // Clear video preview
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    };
+  }, [category]);
+
+  // Attach video stream when recording phase starts
+  useEffect(() => {
+    if (sessionPhase === 'recording' && streamRef.current && videoRef.current) {
+      console.log('Attaching stream to video element');
+      videoRef.current.srcObject = streamRef.current;
+      
+      // Explicitly play the video
+      videoRef.current.play()
+        .then(() => {
+          console.log('Video playback started successfully');
+        })
+        .catch((error) => {
+          console.error('Error playing video:', error);
+        });
     }
+  }, [sessionPhase]);
+
+  const startTimer = (duration, phase) => {
+    // Clear any existing timer first to prevent multiple intervals
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    setTimeLeft(duration);
+    setSessionPhase(phase);
+    
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+          if (phase === 'preparation') {
+            startRecording();
+          } else if (phase === 'recording') {
+            stopRecording();
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const startPreparation = () => {
+    startTimer(60, 'preparation'); 
   };
 
   const startRecording = async () => {
-    if (streamRef.current) {
-      try {
-        recordedChunksRef.current = [];
-        const mediaRecorder = new MediaRecorder(streamRef.current, {
-          mimeType: 'video/webm;codecs=vp8,opus'
-        });
+    try {
+      console.log('Requesting camera and microphone access...');
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: "user"
+        },
+        audio: { 
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        }
+      });
+      
+      console.log('Camera and microphone access granted');
+      streamRef.current = stream;
+      
+      // Set up MediaRecorder first
+      const options = {
+        mimeType: 'video/webm;codecs=vp9,opus',
+        videoBitsPerSecond: 2500000, 
+        audioBitsPerSecond: 128000   
+      };
+      
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options.mimeType = 'video/webm;codecs=vp8,opus';
+      }
+      
+      mediaRecorderRef.current = new MediaRecorder(stream, options);
+      const chunks = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        console.log('MediaRecorder onstop triggered');
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        console.log('Blob created, size:', blob.size);
+        setRecordedBlob(blob);
+        setSessionPhase('completed');
+        generateAIAnalysis();
         
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            recordedChunksRef.current.push(event.data);
+        // Stop camera and microphone tracks AFTER recording is saved
+        console.log('Attempting to stop media tracks');
+        if (streamRef.current) {
+          const tracks = streamRef.current.getTracks();
+          console.log('Found tracks:', tracks.length);
+          tracks.forEach(track => {
+            console.log('Stopping track:', track.kind, track.label);
+            track.stop();
+            console.log('Track stopped, readyState:', track.readyState);
+          });
+          streamRef.current = null;
+        }
+        
+        // Clear video preview
+        if (videoRef.current) {
+          console.log('Clearing video srcObject');
+          videoRef.current.srcObject = null;
+        }
+        console.log('Camera cleanup complete');
+      };
+
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = 'en-US';
+
+        recognitionRef.current.onresult = (event) => {
+          let finalTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript + ' ';
+            }
+          }
+          if (finalTranscript) {
+            setTranscript(prev => prev + finalTranscript);
           }
         };
 
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(recordedChunksRef.current, {
-            type: 'video/webm'
-          });
-          const url = URL.createObjectURL(blob);
-          setRecordings(prev => [...prev, { 
-            questionIndex: currentQuestionIndex,
-            blob,
-            url,
-            question: questions[currentQuestionIndex]
-          }]);
-          
-          // Simulate transcript generation (in real app, use speech-to-text API)
-          generateMockTranscript(currentQuestionIndex);
-        };
-
-        mediaRecorderRef.current = mediaRecorder;
-        mediaRecorder.start();
-        setIsRecording(true);
-      } catch (error) {
-        console.error('Error starting recording:', error);
+        recognitionRef.current.start();
       }
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      startTimer(120, 'recording'); // 2 minutes recording
+    } catch (error) {
+      console.error('Error accessing media devices:', error);
+      
+      let errorMessage = 'Unable to access camera and microphone.\n\n';
+      
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        errorMessage += '❌ Permission denied!\n\n';
+        errorMessage += 'Please:\n';
+        errorMessage += '1. Click the camera icon in your browser address bar\n';
+        errorMessage += '2. Allow camera and microphone access\n';
+        errorMessage += '3. Refresh the page and try again';
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        errorMessage += '❌ No camera or microphone found!\n\n';
+        errorMessage += 'Please check that your devices are connected.';
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        errorMessage += '❌ Camera or microphone is already in use!\n\n';
+        errorMessage += 'Please close other apps using your camera/microphone.';
+      } else {
+        errorMessage += '❌ Error: ' + error.message;
+      }
+      
+      alert(errorMessage);
+      
+      // Go back to question phase so user can try again
+      setSessionPhase('question');
+      setTimeLeft(0);
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    console.log('stopRecording called');
+    
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      console.log('Stopping media recorder');
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      // Note: Camera tracks will be stopped in mediaRecorder.onstop callback
     }
-  };
-
-  const generateMockTranscript = (questionIndex) => {
-    // Mock transcript - in real app, integrate with speech-to-text service
-    const mockTranscripts = [
-      "Thank you for the question. In my previous role, I faced a significant challenge when our main database crashed during peak business hours. I immediately assembled a crisis team, communicated with stakeholders about the situation, and worked with our IT team to restore service within 2 hours. We also implemented better backup procedures to prevent future issues.",
-      "I believe effective communication is key when working with difficult team members. I once had a colleague who was resistant to new processes. I took the time to understand their concerns, found common ground, and worked together to find a solution that addressed both their needs and the project requirements.",
-      "When facing tight deadlines, I prioritize tasks based on impact and urgency. For example, when we had to deliver a project two weeks early, I broke down the work into smaller chunks, identified critical path items, and coordinated with team members to ensure we met the deadline without compromising quality."
-    ];
     
-    const transcript = mockTranscripts[questionIndex % mockTranscripts.length];
-    setTranscripts(prev => [...prev, {
-      questionIndex,
-      text: transcript,
-      timestamp: new Date().toISOString()
-    }]);
-  };
-
-  const toggleVideo = () => {
-    if (streamRef.current) {
-      const videoTrack = streamRef.current.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        setIsVideoEnabled(videoTrack.enabled);
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        console.log('Recognition already stopped');
       }
+    }
+    
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
   };
 
-  const toggleAudio = () => {
-    if (streamRef.current) {
-      const audioTrack = streamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsAudioEnabled(audioTrack.enabled);
-      }
+  const generateAIAnalysis = () => {
+    // Simulate AI analysis - in a real app, this would call your AI service
+    setTimeout(() => {
+      const analysis = {
+        overallScore: Math.floor(Math.random() * 30) + 70, // 70-100 score
+        bodyLanguage: {
+          score: Math.floor(Math.random() * 20) + 80,
+          feedback: "Good eye contact maintained throughout. Consider sitting up straighter for better posture."
+        },
+        speechAnalysis: {
+          score: Math.floor(Math.random() * 25) + 75,
+          wordsPerMinute: Math.floor(Math.random() * 50) + 120,
+          fillerWords: Math.floor(Math.random() * 8) + 2,
+          feedback: "Clear articulation and good pace. Try to reduce filler words like 'um' and 'uh'."
+        },
+        contentQuality: {
+          score: Math.floor(Math.random() * 20) + 80,
+          structure: "Good use of STAR method",
+          feedback: "Well-structured response with clear examples. Consider adding more specific metrics."
+        },
+        eyeContact: {
+          score: Math.floor(Math.random() * 15) + 85,
+          percentage: Math.floor(Math.random() * 20) + 80,
+          feedback: "Excellent eye contact maintained. Shows confidence and engagement."
+        }
+      };
+      setAiAnalysis(analysis);
+    }, 2000);
+  };
+
+  const downloadRecording = () => {
+    if (recordedBlob) {
+      const url = URL.createObjectURL(recordedBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `interview-recording-${Date.now()}.webm`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
   };
 
-  const downloadRecording = (recording) => {
-    const a = document.createElement('a');
-    a.href = recording.url;
-    a.download = `interview_question_${recording.questionIndex + 1}.webm`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  const downloadTranscript = () => {
+    if (transcript) {
+      const blob = new Blob([transcript], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `interview-transcript-${Date.now()}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   const formatTime = (seconds) => {
@@ -189,216 +368,187 @@ const InterviewSession = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (!questions) {
+  if (sessionPhase === 'question') {
     return (
-      <div className="min-h-screen pt-20 flex items-center justify-center">
-        <div className="text-center text-white">
-          <h2 className="text-2xl font-bold mb-4">Session Not Found</h2>
-          <p className="text-white/70 mb-6">Please start an interview from the main interview page.</p>
-          <Button
-            borderRadius="1rem"
-            className="bg-blue-500/80 text-white px-6 py-3"
-            onClick={() => navigate('/interview')}
-          >
-            Back to Interview
-          </Button>
+      <div className="min-h-screen pt-20 pb-10 flex items-center justify-center">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h1 className="text-3xl font-bold text-white mb-4">{category}</h1>
+          <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 mb-8">
+            <h2 className="text-xl font-semibold text-white mb-6">Your Question:</h2>
+            <p className="text-lg text-white/90 mb-8 leading-relaxed">{currentQuestion}</p>
+            <button 
+              onClick={startPreparation}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 text-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 rounded-2xl"
+            >
+              Start Preparation (1 min)
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen pt-20 pb-10">
-      <div className="max-w-6xl mx-auto px-6">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <button
-            onClick={() => navigate('/interview')}
-            className="flex items-center space-x-2 text-white/70 hover:text-white transition-colors"
-          >
-            <IconArrowLeft className="w-5 h-5" />
-            <span>Back to Interview</span>
-          </button>
-          
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-white">{title}</h1>
-            <p className="text-white/70">Question {currentQuestionIndex + 1} of {questions.length}</p>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <IconClock className="w-5 h-5 text-white/70" />
-            <span className="text-white font-mono text-lg">{formatTime(timeLeft)}</span>
+  if (sessionPhase === 'preparation') {
+    return (
+      <div className="min-h-screen pt-20 pb-10 flex items-center justify-center">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h1 className="text-3xl font-bold text-white mb-4">Preparation Time</h1>
+          <div className="text-6xl font-bold text-blue-400 mb-6">{formatTime(timeLeft)}</div>
+          <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20">
+            <p className="text-lg text-white/90 mb-4">Think about your answer and structure your response.</p>
+            <p className="text-white/70">Recording will start automatically when preparation time ends.</p>
           </div>
         </div>
-
-        {phase !== 'completed' ? (
-          <div className="grid lg:grid-cols-2 gap-8">
-            
-            {/* Left Side - Question and Instructions */}
-            <div className="space-y-6">
-              
-              {/* Current Question */}
-              <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
-                <h2 className="text-xl font-semibold text-white mb-4">
-                  Question {currentQuestionIndex + 1}
-                </h2>
-                <p className="text-lg text-white/90 leading-relaxed">
-                  {questions[currentQuestionIndex]}
-                </p>
-              </div>
-
-              {/* Phase Instructions */}
-              <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
-                {phase === 'preparation' ? (
-                  <div className="text-center">
-                    <div className="bg-blue-500/20 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                      <IconClock className="w-8 h-8 text-blue-400" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Preparation Time</h3>
-                    <p className="text-white/70">Take this time to think about your answer. Recording will start automatically when the timer ends.</p>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <div className="bg-red-500/20 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                      <IconMicrophone className="w-8 h-8 text-red-400" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Recording in Progress</h3>
-                    <p className="text-white/70">Speak clearly and maintain eye contact with the camera. You have 2 minutes to answer.</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Progress */}
-              <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
-                <div className="flex justify-between text-white/70 text-sm mb-2">
-                  <span>Progress</span>
-                  <span>{currentQuestionIndex + 1} / {questions.length}</span>
-                </div>
-                <div className="w-full bg-white/20 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Right Side - Video and Controls */}
-            <div className="space-y-6">
-              
-              {/* Video Feed */}
-              <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
-                <div className="relative">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    muted
-                    playsInline
-                    className="w-full h-64 bg-black rounded-xl object-cover"
-                  />
-                  
-                  {/* Recording Indicator */}
-                  {isRecording && (
-                    <div className="absolute top-4 left-4 flex items-center space-x-2 bg-red-500/90 px-3 py-1 rounded-full">
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                      <span className="text-white text-sm font-medium">REC</span>
-                    </div>
-                  )}
-                  
-                  {/* Phase Indicator */}
-                  <div className="absolute top-4 right-4 bg-black/50 px-3 py-1 rounded-full">
-                    <span className="text-white text-sm font-medium capitalize">
-                      {phase === 'preparation' ? 'Prep Time' : 'Recording'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Media Controls */}
-              <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
-                <h3 className="text-lg font-semibold text-white mb-4">Controls</h3>
-                <div className="flex justify-center space-x-4">
-                  <button
-                    onClick={toggleVideo}
-                    className={`p-3 rounded-full transition-all duration-300 ${
-                      isVideoEnabled 
-                        ? 'bg-white/20 text-white hover:bg-white/30' 
-                        : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                    }`}
-                  >
-                    {isVideoEnabled ? <IconVideo className="w-6 h-6" /> : <IconVideoOff className="w-6 h-6" />}
-                  </button>
-                  
-                  <button
-                    onClick={toggleAudio}
-                    className={`p-3 rounded-full transition-all duration-300 ${
-                      isAudioEnabled 
-                        ? 'bg-white/20 text-white hover:bg-white/30' 
-                        : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                    }`}
-                  >
-                    {isAudioEnabled ? <IconMicrophone className="w-6 h-6" /> : <IconMicrophoneOff className="w-6 h-6" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Completion Screen */
-          <div className="text-center space-y-8">
-            <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20">
-              <div className="bg-green-500/20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <IconCheck className="w-10 h-10 text-green-400" />
-              </div>
-              
-              <h2 className="text-3xl font-bold text-white mb-4">Interview Completed!</h2>
-              <p className="text-xl text-white/70 mb-8">
-                Great job! You've completed all {questions.length} questions.
-              </p>
-
-              {/* Recordings Summary */}
-              <div className="space-y-4 mb-8">
-                <h3 className="text-xl font-semibold text-white">Your Recordings</h3>
-                {recordings.map((recording, index) => (
-                  <div key={index} className="flex items-center justify-between bg-white/5 p-4 rounded-xl">
-                    <div className="text-left">
-                      <h4 className="font-medium text-white">Question {index + 1}</h4>
-                      <p className="text-white/70 text-sm">{recording.question.substring(0, 60)}...</p>
-                    </div>
-                    <button
-                      onClick={() => downloadRecording(recording)}
-                      className="flex items-center space-x-2 bg-blue-500/20 text-blue-400 px-4 py-2 rounded-lg hover:bg-blue-500/30 transition-all duration-300"
-                    >
-                      <IconDownload className="w-4 h-4" />
-                      <span>Download</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex justify-center space-x-4">
-                <Button
-                  borderRadius="1rem"
-                  className="bg-white/10 text-white px-6 py-3 hover:bg-white/20 transition-all duration-300"
-                  onClick={() => navigate('/interview')}
-                >
-                  Start New Interview
-                </Button>
-                <Button
-                  borderRadius="1rem"
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 hover:from-purple-600 hover:to-pink-600 transition-all duration-300"
-                  onClick={() => navigate('/reports', { state: { sessionId, recordings, transcripts, category, title } })}
-                >
-                  View AI Report
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-    </div>
-  );
-};
+    );
+  }
+
+  if (sessionPhase === 'recording') {
+    return (
+      <div className="min-h-screen pt-20 pb-10">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-6 mt-16">
+            <h1 className="text-3xl font-bold text-white mb-2">Recording in Progress</h1>
+            <div className="text-4xl font-bold text-red-400 mb-4">
+              🔴 {formatTime(timeLeft)}
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
+              <h3 className="text-lg font-semibold text-white mb-4">Question:</h3>
+              <p className="text-white/90">{currentQuestion}</p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
+              <h3 className="text-lg font-semibold text-white mb-4">Your Video:</h3>
+              <video 
+                ref={videoRef}
+                autoPlay 
+                playsInline
+                muted 
+                className="w-full rounded-xl bg-gray-800"
+                style={{ transform: 'scaleX(-1)', minHeight: '300px' }}
+              />
+            </div>
+          </div>
+          
+          <div className="mt-6 text-center">
+            <button 
+              onClick={stopRecording}
+              className="bg-red-500 hover:bg-red-600 text-white px-8 py-4 text-lg font-semibold transition-all duration-300 rounded-2xl"
+            >
+              Stop Recording
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (sessionPhase === 'completed') {
+    return (
+      <div className="min-h-screen pt-20 pb-10">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-8 mt-16">
+            <h1 className="text-3xl font-bold text-white mb-4">Interview Complete!</h1>
+            <p className="text-white/70">Your recording has been processed and AI analysis is ready.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
+            {/* Recording Preview */}
+            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
+              <h3 className="text-lg font-semibold text-white mb-4">Your Recording</h3>
+              {recordedBlob && (
+                <video 
+                  src={URL.createObjectURL(recordedBlob)} 
+                  controls 
+                  className="w-full rounded-xl mb-4"
+                />
+              )}
+              <button 
+                onClick={downloadRecording}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-xl transition-all duration-300"
+              >
+                Download Recording
+              </button>
+            </div>
+
+            {/* Transcript */}
+            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
+              <h3 className="text-lg font-semibold text-white mb-4">Transcript</h3>
+              <div className="bg-black/20 p-4 rounded-xl mb-4 max-h-64 overflow-y-auto">
+                <p className="text-white/80 text-sm">{transcript || "Transcript generation in progress..."}</p>
+              </div>
+              <button 
+                onClick={downloadTranscript}
+                className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-xl transition-all duration-300"
+              >
+                Download Transcript
+              </button>
+            </div>
+          </div>
+
+          {/* AI Analysis */}
+          {aiAnalysis && (
+            <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 mb-8">
+              <h3 className="text-2xl font-semibold text-white mb-6 text-center">AI Performance Analysis</h3>
+              
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-400 mb-2">{aiAnalysis.overallScore}%</div>
+                  <div className="text-white/70">Overall Score</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-400 mb-2">{aiAnalysis.bodyLanguage.score}%</div>
+                  <div className="text-white/70">Body Language</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-purple-400 mb-2">{aiAnalysis.speechAnalysis.score}%</div>
+                  <div className="text-white/70">Speech Quality</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-yellow-400 mb-2">{aiAnalysis.eyeContact.score}%</div>
+                  <div className="text-white/70">Eye Contact</div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-white mb-2">Body Language Feedback:</h4>
+                  <p className="text-white/70 text-sm">{aiAnalysis.bodyLanguage.feedback}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white mb-2">Speech Analysis:</h4>
+                  <p className="text-white/70 text-sm">{aiAnalysis.speechAnalysis.feedback}</p>
+                  <p className="text-white/60 text-xs mt-2">
+                    WPM: {aiAnalysis.speechAnalysis.wordsPerMinute} | Filler words: {aiAnalysis.speechAnalysis.fillerWords}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="text-center">
+            <button 
+              onClick={() => navigate('/interview')}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 text-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 rounded-2xl mr-4"
+            >
+              Practice Again
+            </button>
+            <button 
+              onClick={() => navigate('/reports')}
+              className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 text-lg font-semibold hover:from-green-600 hover:to-blue-600 transition-all duration-300 rounded-2xl"
+            >
+              View All Reports
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
 
 export default InterviewSession;
