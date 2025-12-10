@@ -1,17 +1,30 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/moving-border';
+import { login } from '../services/api';
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (email && password) {
-      onLogin(); 
+    setError('');
+    setLoading(true);
+    
+    try {
+      const userData = await login(email, password);
+      console.log('Login successful:', userData);
+      onLogin(userData);
       navigate('/');
+    } catch (error) {
+      console.error('Login failed:', error);
+      setError(error.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -23,6 +36,12 @@ const Login = ({ onLogin }) => {
           <p className="text-white/70 text-lg">Sign in to your account</p>
         </div>
         
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
+            <p className="text-red-200 text-sm text-center">{error}</p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-white/80 text-sm font-medium">Email</label>
@@ -33,6 +52,7 @@ const Login = ({ onLogin }) => {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-4 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20 transition-all duration-300"
               required
+              disabled={loading}
             />
           </div>
           
@@ -45,15 +65,17 @@ const Login = ({ onLogin }) => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-4 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20 transition-all duration-300"
               required
+              disabled={loading}
             />
           </div>
           
           <Button 
             borderRadius="1rem"
-            className="bg-white/10 backdrop-blur-md text-white border-white/20 hover:bg-white/20 transition-all duration-300 px-4 py-2 text-sm font-medium cursor-pointer"
+            className="bg-white/10 backdrop-blur-md text-white border-white/20 hover:bg-white/20 transition-all duration-300 px-4 py-2 text-sm font-medium cursor-pointer w-full"
             onClick={handleSubmit}
+            disabled={loading}
           >
-            Sign In
+            {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
         
@@ -65,8 +87,6 @@ const Login = ({ onLogin }) => {
             </Link>
           </p>
         </div>
-        
-        
       </div>
     </div>
   );

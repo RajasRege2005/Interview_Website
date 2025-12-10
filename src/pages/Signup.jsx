@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/moving-border';
+import { signup, login } from '../services/api';
 
 const Signup = ({ onLogin }) => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,8 @@ const Signup = ({ onLogin }) => {
     password: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -19,20 +22,40 @@ const Signup = ({ onLogin }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     
     // Basic validation
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      setError('Passwords do not match!');
       return;
     }
 
-    if (formData.fullName && formData.email && formData.password) {
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Call signup API
+      await signup(formData.email, formData.fullName, formData.password);
+      
+      // Auto-login after successful signup
+      const userData = await login(formData.email, formData.password);
+      console.log('Signup and login successful:', userData);
+      
       if (onLogin) {
-        onLogin();
+        onLogin(userData);
       }
       navigate('/');
+    } catch (error) {
+      console.error('Signup failed:', error);
+      setError(error.message || 'Signup failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -43,6 +66,12 @@ const Signup = ({ onLogin }) => {
           <h2 className="text-white text-4xl font-bold mb-2">Create Account</h2>
           <p className="text-white/70 text-lg">Join us today</p>
         </div>
+        
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
+            <p className="text-red-200 text-sm text-center">{error}</p>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
@@ -55,6 +84,7 @@ const Signup = ({ onLogin }) => {
               onChange={handleInputChange}
               className="w-full p-4 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400/20 transition-all duration-300"
               required
+              disabled={loading}
             />
           </div>
           
@@ -68,6 +98,7 @@ const Signup = ({ onLogin }) => {
               onChange={handleInputChange}
               className="w-full p-4 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400/20 transition-all duration-300"
               required
+              disabled={loading}
             />
           </div>
           
@@ -81,6 +112,7 @@ const Signup = ({ onLogin }) => {
               onChange={handleInputChange}
               className="w-full p-4 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400/20 transition-all duration-300"
               required
+              disabled={loading}
             />
           </div>
           
@@ -94,15 +126,17 @@ const Signup = ({ onLogin }) => {
               onChange={handleInputChange}
               className="w-full p-4 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400/20 transition-all duration-300"
               required
+              disabled={loading}
             />
           </div>
           
           <Button 
             borderRadius="0.75rem"
-            className="bg-white/10 backdrop-blur-md text-white border-white/20 hover:bg-white/20 transition-all duration-300 px-4 py-2 text-sm font-medium cursor-pointer "
+            className="bg-white/10 backdrop-blur-md text-white border-white/20 hover:bg-white/20 transition-all duration-300 px-4 py-2 text-sm font-medium cursor-pointer w-full"
             onClick={handleSubmit}
+            disabled={loading}
           >
-            Create Account
+            {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
         

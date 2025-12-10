@@ -6,7 +6,7 @@ function InterviewSession() {
   const navigate = useNavigate();
   const category = location.state?.category || 'Behavioral Interviews';
   
-  const [sessionPhase, setSessionPhase] = useState('question'); // question, preparation, recording, completed
+  const [sessionPhase, setSessionPhase] = useState('question'); 
   const [timeLeft, setTimeLeft] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState('');
@@ -69,10 +69,8 @@ function InterviewSession() {
   };
 
   useEffect(() => {
-    // Set random question when component mounts
     setCurrentQuestion(getRandomQuestion(category));
     
-    // Cleanup function to clean up everything on unmount
     return () => {
       // Clear timer
       if (timerRef.current) {
@@ -80,7 +78,6 @@ function InterviewSession() {
         timerRef.current = null;
       }
       
-      // Stop speech recognition
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
@@ -292,7 +289,6 @@ function InterviewSession() {
       console.log('Stopping media recorder');
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      // Note: Camera tracks will be stopped in mediaRecorder.onstop callback
     }
     
     if (recognitionRef.current) {
@@ -310,10 +306,9 @@ function InterviewSession() {
   };
 
   const generateAIAnalysis = () => {
-    // Simulate AI analysis - in a real app, this would call your AI service
     setTimeout(() => {
       const analysis = {
-        overallScore: Math.floor(Math.random() * 30) + 70, // 70-100 score
+        overallScore: Math.floor(Math.random() * 30) + 70, 
         bodyLanguage: {
           score: Math.floor(Math.random() * 20) + 80,
           feedback: "Good eye contact maintained throughout. Consider sitting up straighter for better posture."
@@ -456,7 +451,6 @@ function InterviewSession() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-8">
-            {/* Recording Preview */}
             <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
               <h3 className="text-lg font-semibold text-white mb-4">Your Recording</h3>
               {recordedBlob && (
@@ -474,7 +468,6 @@ function InterviewSession() {
               </button>
             </div>
 
-            {/* Transcript */}
             <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
               <h3 className="text-lg font-semibold text-white mb-4">Transcript</h3>
               <div className="bg-black/20 p-4 rounded-xl mb-4 max-h-64 overflow-y-auto">
@@ -489,7 +482,6 @@ function InterviewSession() {
             </div>
           </div>
 
-          {/* AI Analysis */}
           {aiAnalysis && (
             <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 mb-8">
               <h3 className="text-2xl font-semibold text-white mb-6 text-center">AI Performance Analysis</h3>

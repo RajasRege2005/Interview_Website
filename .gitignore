@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.venv
 src/ErrorBoundary.jsx
 # Editor directories and files
 .vscode/*
