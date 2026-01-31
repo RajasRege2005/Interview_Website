@@ -69,14 +69,15 @@ const Login = ({ onLogin }) => {
             />
           </div>
           
-          <Button 
-            borderRadius="1rem"
-            className="bg-white/10 backdrop-blur-md text-white border-white/20 hover:bg-white/20 transition-all duration-300 px-4 py-2 text-sm font-medium cursor-pointer w-full"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </Button>
+          <div className="flex justify-center">
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="bg-white/10 backdrop-blur-md text-white border border-white/20 hover:bg-white/20 transition-all duration-300 px-8 py-3 rounded-2xl text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </Button>
+          </div>
         </form>
         
         <div className="mt-8 text-center">

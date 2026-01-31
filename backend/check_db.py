@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:12345@localhost:5432/interview_platform")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 print(f"Connecting to: {DATABASE_URL}")
 
@@ -15,7 +15,8 @@ try:
     db = SessionLocal()
 
     # Query all users
-    result = db.execute("SELECT * FROM users")
+    from sqlalchemy import text
+    result = db.execute(text("SELECT * FROM users"))
     users = result.fetchall()
 
     print(f"\n{'='*60}")

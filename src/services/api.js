@@ -125,3 +125,41 @@ export const logout = () => {
   removeAuthToken();
   removeUserData();
 };
+
+export const transcribeAndAnalyze = async (videoBlob, question) => {
+  try {
+    const token = getAuthToken();
+    console.log('Token from storage:', token ? 'Token exists' : 'NO TOKEN FOUND');
+    
+    if (!token) {
+      throw new Error('Not authenticated. Please login again.');
+    }
+
+    const formData = new FormData();
+    formData.append('file', videoBlob, 'interview-recording.webm');
+    formData.append('question', question);
+
+    console.log('Sending request to /transcribe-and-analyze...');
+
+    const response = await fetch(`${API_BASE_URL}/transcribe-and-analyze`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    console.log('Response status:', response.status);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Analysis failed');
+    }
+
+    const data = await response.json();
+    return data; // Returns { success, transcript, analysis, user_id }
+  } catch (error) {
+    console.error('Analysis error:', error);
+    throw error;
+  }
+};

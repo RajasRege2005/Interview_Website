@@ -172,46 +172,6 @@ function Home() {
         </div>
 
         <div className="mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-12">What Our Users Say</h2>
-          
-          <div className="relative">
-            <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 text-center max-w-4xl mx-auto">
-              <div className="flex justify-center mb-4">
-                {[...Array(testimonials[currentTestimonial].rating)].map((_, i) => (
-                  <span key={i} className="text-yellow-400 text-xl">⭐</span>
-                ))}
-              </div>
-              
-              <blockquote className="text-xl text-white/90 mb-6 italic">
-                "{testimonials[currentTestimonial].quote}"
-              </blockquote>
-              
-              <div className="text-white font-semibold">
-                {testimonials[currentTestimonial].name}
-              </div>
-              <div className="text-white/60">
-                {testimonials[currentTestimonial].role}
-              </div>
-            </div>
-            
-            {/* Testimonial Navigation Dots */}
-            <div className="flex justify-center mt-6 space-x-2">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentTestimonial(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentTestimonial 
-                      ? 'bg-blue-400' 
-                      : 'bg-white/30 hover:bg-white/50'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-12">Frequently Asked Questions</h2>
           
           <div className="max-w-4xl mx-auto">

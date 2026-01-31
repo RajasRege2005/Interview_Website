@@ -24,3 +24,5 @@ src/ErrorBoundary.jsx
 *.njsproj
 *.sln
 *.sw?
+.backend/__pycache__
+.backend/*.pyc

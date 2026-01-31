@@ -13,6 +13,8 @@ function InterviewSession() {
   const [recordedBlob, setRecordedBlob] = useState(null);
   const [transcript, setTranscript] = useState('');
   const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcriptionError, setTranscriptionError] = useState(null);
   
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -204,11 +206,9 @@ function InterviewSession() {
         const blob = new Blob(chunks, { type: 'video/webm' });
         console.log('Blob created, size:', blob.size);
         setRecordedBlob(blob);
-        setSessionPhase('completed');
-        generateAIAnalysis();
         
-        // Stop camera and microphone tracks AFTER recording is saved
-        console.log('Attempting to stop media tracks');
+        // Stop camera and microphone tracks IMMEDIATELY after recording stops
+        console.log('Stopping camera and microphone...');
         if (streamRef.current) {
           const tracks = streamRef.current.getTracks();
           console.log('Found tracks:', tracks.length);
@@ -226,8 +226,15 @@ function InterviewSession() {
           videoRef.current.srcObject = null;
         }
         console.log('Camera cleanup complete');
+        
+        // Now set completed phase
+        setSessionPhase('completed');
+        
+        // Generate AI analysis
+        generateAIAnalysis();
       };
 
+      // Set up Web Speech API for real-time transcription
       if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognitionRef.current = new SpeechRecognition();
@@ -235,19 +242,37 @@ function InterviewSession() {
         recognitionRef.current.interimResults = true;
         recognitionRef.current.lang = 'en-US';
 
+        let finalTranscript = '';
+
         recognitionRef.current.onresult = (event) => {
-          let finalTranscript = '';
+          let interimTranscript = '';
+          
           for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
-              finalTranscript += event.results[i][0].transcript + ' ';
+              finalTranscript += transcript + ' ';
+            } else {
+              interimTranscript += transcript;
             }
           }
-          if (finalTranscript) {
-            setTranscript(prev => prev + finalTranscript);
-          }
+          
+          setTranscript(finalTranscript + interimTranscript);
         };
 
-        recognitionRef.current.start();
+        recognitionRef.current.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+        };
+
+        recognitionRef.current.onend = () => {
+          console.log('Speech recognition ended');
+        };
+
+        try {
+          recognitionRef.current.start();
+          console.log('Speech recognition started');
+        } catch (error) {
+          console.error('Error starting speech recognition:', error);
+        }
       }
 
       mediaRecorderRef.current.start();
@@ -291,19 +316,13 @@ function InterviewSession() {
       setIsRecording(false);
     }
     
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {
-        console.log('Recognition already stopped');
-      }
-    }
-    
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
   };
+
+
 
   const generateAIAnalysis = () => {
     setTimeout(() => {
@@ -390,6 +409,7 @@ function InterviewSession() {
           <h1 className="text-3xl font-bold text-white mb-4">Preparation Time</h1>
           <div className="text-6xl font-bold text-blue-400 mb-6">{formatTime(timeLeft)}</div>
           <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20">
+            <h2 className="text-xl text-white/90 mb-4">{currentQuestion}</h2>
             <p className="text-lg text-white/90 mb-4">Think about your answer and structure your response.</p>
             <p className="text-white/70">Recording will start automatically when preparation time ends.</p>
           </div>
@@ -471,11 +491,21 @@ function InterviewSession() {
             <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
               <h3 className="text-lg font-semibold text-white mb-4">Transcript</h3>
               <div className="bg-black/20 p-4 rounded-xl mb-4 max-h-64 overflow-y-auto">
-                <p className="text-white/80 text-sm">{transcript || "Transcript generation in progress..."}</p>
+                {isTranscribing ? (
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div>
+                    <p className="text-white/80 text-sm">Generating accurate transcript with AI...</p>
+                  </div>
+                ) : transcriptionError ? (
+                  <p className="text-red-400 text-sm">{transcriptionError}</p>
+                ) : (
+                  <p className="text-white/80 text-sm">{transcript || "No transcript available"}</p>
+                )}
               </div>
               <button 
                 onClick={downloadTranscript}
-                className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-xl transition-all duration-300"
+                disabled={isTranscribing || !transcript}
+                className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Download Transcript
               </button>
