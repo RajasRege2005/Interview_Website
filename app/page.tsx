@@ -71,7 +71,7 @@ export default function Home() {
               <div 
                 key={index} 
                 className={`group p-8 rounded-2xl border-2 border-slate-100 hover:border-blue-500 transition-all hover:shadow-xl duration-700 ${featuresAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-                style={{transitionDelay: featuresAnimation.isVisible ? `${index * 150}ms` : '0ms'}}
+                style={{transitionDelay: featuresAnimation.isVisible ? `${150}ms` : '0ms'}}
               >
                 <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">{feature.icon}</div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-3">{feature.title}</h3>
