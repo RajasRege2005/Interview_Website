@@ -75,6 +75,36 @@ function InterviewSessionContent() {
     return questions[Math.floor(Math.random() * questions.length)]
   }
 
+  // Single centralized camera cleanup function
+  const stopCamera = () => {
+    console.log('🛑 Stopping camera...')
+    
+    // Stop all media tracks
+    if (streamRef.current) {
+      const tracks = streamRef.current.getTracks()
+      tracks.forEach(track => {
+        track.enabled = false
+        track.stop()
+      })
+      streamRef.current = null
+    }
+
+    // Clear video element
+    if (videoRef.current) {
+      videoRef.current.pause()
+      videoRef.current.srcObject = null
+      videoRef.current.src = ''
+      videoRef.current.load()
+    }
+
+    // Clear MediaRecorder
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current = null
+    }
+
+    console.log('✓ Camera stopped')
+  }
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login')
@@ -88,14 +118,7 @@ function InterviewSessionContent() {
       if (timerRef.current) {
         clearInterval(timerRef.current)
       }
-      
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop()
-      }
-      
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop())
-      }
+      stopCamera()
     }
   }, [category])
 
@@ -152,17 +175,8 @@ function InterviewSessionContent() {
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'video/webm' })
         setRecordedBlob(blob)
+        stopCamera()
         setSessionPhase('completed')
-        
-        // Stop camera immediately
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop())
-        }
-        
-        // Clear video source
-        if (videoRef.current) {
-          videoRef.current.srcObject = null
-        }
       }
 
       mediaRecorder.start()
@@ -177,10 +191,11 @@ function InterviewSessionContent() {
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()
-      setIsRecording(false)
+      mediaRecorderRef.current.stop() // This triggers onstop which calls stopCamera()
     }
+    setIsRecording(false)
   }
+
 
   const downloadRecording = () => {
     if (recordedBlob) {
@@ -260,15 +275,17 @@ function InterviewSessionContent() {
               </div>
             </div>
 
-            {/* Right side - Video Feed */}
+            {/* Right side - Video Feed - ONLY RENDER DURING PREP/RECORDING */}
             <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full aspect-video"
-              />
+              {(sessionPhase === 'preparation' || sessionPhase === 'recording') && (
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full aspect-video"
+                />
+              )}
             </div>
           </div>
         )}

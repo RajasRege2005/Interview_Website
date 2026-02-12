@@ -21,7 +21,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Auth session check:', session)
       if (session?.user) {
         const userData = {
           id: session.user.id,
@@ -29,7 +28,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: session.user.user_metadata?.name || session.user.email!,
           created_at: session.user.created_at,
         }
-        console.log('Setting user:', userData)
         setUser(userData);
       } else {
         console.log('No session found')
@@ -40,7 +38,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session)
       if (session?.user) {
         const userData = {
           id: session.user.id,
@@ -48,7 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: session.user.user_metadata?.name || session.user.email!,
           created_at: session.user.created_at,
         }
-        console.log('Auth state change - setting user:', userData)
         setUser(userData);
       } else {
         console.log('Auth state change - clearing user')
