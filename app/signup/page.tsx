@@ -61,12 +61,12 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center px-6 py-12">
+    <div className="min-h-screen bg-background noise-bg flex items-center justify-center px-6 py-12">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-card border border-border rounded-xl shadow-xl p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Create Account</h1>
-            <p className="text-slate-600">Start your interview prep journey today</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Create Account</h1>
+            <p className="text-muted-foreground">Start your interview prep journey today</p>
           </div>
           
           {error && (
@@ -77,7 +77,7 @@ export default function SignupPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="name" className="block text-slate-700 mb-2 text-sm font-semibold">
+              <label htmlFor="name" className="block text-foreground mb-2 text-sm font-semibold">
                 Full Name
               </label>
               <input
@@ -86,13 +86,13 @@ export default function SignupPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-3 bg-secondary border-2 border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary transition-colors"
                 placeholder="John Doe"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-slate-700 mb-2 text-sm font-semibold">
+              <label htmlFor="email" className="block text-foreground mb-2 text-sm font-semibold">
                 Email Address
               </label>
               <input
@@ -101,13 +101,13 @@ export default function SignupPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-3 bg-secondary border-2 border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary transition-colors"
                 placeholder="your@email.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-slate-700 mb-2 text-sm font-semibold">
+              <label htmlFor="password" className="block text-foreground mb-2 text-sm font-semibold">
                 Password
               </label>
               <input
@@ -116,7 +116,7 @@ export default function SignupPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-3 bg-secondary border-2 border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary transition-colors"
                 placeholder="••••••••"
               />
             </div>
@@ -124,17 +124,17 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              className="w-full py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2 shadow-[0_0_20px_oklch(0.72_0.19_180/0.3)] hover:shadow-[0_0_30px_oklch(0.72_0.19_180/0.5)]"
             >
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-300"></div>
+                <div className="w-full border-t border-border"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-slate-500 font-medium">Or continue with</span>
+                <span className="px-4 bg-card text-muted-foreground font-medium">Or continue with</span>
               </div>
             </div>
 
@@ -142,7 +142,7 @@ export default function SignupPage() {
               type="button"
               onClick={handleGoogleSignUp}
               disabled={loading}
-              className="w-full py-3 bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-900 font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg flex items-center justify-center gap-3"
+              className="w-full py-3 bg-secondary border-2 border-border hover:border-primary/30 hover:bg-secondary/80 text-foreground font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -166,9 +166,9 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-slate-600 text-sm">
+          <p className="mt-6 text-center text-muted-foreground text-sm">
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <Link href="/login" className="text-primary hover:text-primary/80 font-semibold transition-colors">
               Sign in
             </Link>
           </p>

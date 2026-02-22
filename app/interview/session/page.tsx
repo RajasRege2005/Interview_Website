@@ -212,8 +212,8 @@ function InterviewSessionContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pt-20 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+        <div className="text-foreground text-xl">Loading...</div>
       </div>
     )
   }
@@ -223,12 +223,12 @@ function InterviewSessionContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pt-20 pb-16">
+    <div className="min-h-screen bg-background noise-bg pt-20 pb-16">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-6 mt-8">
-          <h1 className="text-3xl font-bold text-white mb-3">{category}</h1>
-          <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-lg">
-            <span className="text-white text-sm font-semibold">
+          <h1 className="text-3xl font-bold text-foreground mb-3">{category}</h1>
+          <div className="inline-block px-4 py-2 bg-card/60 backdrop-blur-sm rounded-lg border border-border">
+            <span className="text-foreground text-sm font-semibold">
               {sessionPhase === 'question' && 'Read the question'}
               {sessionPhase === 'preparation' && 'Preparation Time'}
               {sessionPhase === 'recording' && 'Recording in Progress'}
@@ -239,14 +239,14 @@ function InterviewSessionContent() {
 
         {sessionPhase === 'question' && (
           <>
-            <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Your Question:</h2>
-              <p className="text-xl text-slate-700 leading-relaxed">{currentQuestion}</p>
+            <div className="bg-card border border-border rounded-2xl shadow-xl p-8 mb-8">
+              <h2 className="text-2xl font-bold text-foreground mb-4">Your Question:</h2>
+              <p className="text-xl text-muted-foreground leading-relaxed">{currentQuestion}</p>
             </div>
             <div className="text-center">
               <button
                 onClick={startPreparation}
-                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-xl hover:shadow-2xl text-lg transform hover:scale-[1.02]"
+                className="px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all shadow-[0_0_20px_oklch(0.72_0.19_180/0.3)] hover:shadow-[0_0_30px_oklch(0.72_0.19_180/0.5)] text-lg transform hover:scale-[1.02]"
               >
                 Start Preparation (1 min)
               </button>
@@ -257,21 +257,21 @@ function InterviewSessionContent() {
         {(sessionPhase === 'preparation' || sessionPhase === 'recording') && (
           <div className="grid lg:grid-cols-2 gap-6">
             <div className="space-y-6">
-              <div className="bg-white rounded-2xl shadow-xl p-6">
-                <h2 className="text-xl font-bold text-slate-900 mb-3">Your Question:</h2>
-                <p className="text-lg text-slate-700 leading-relaxed">{currentQuestion}</p>
+              <div className="bg-card border border-border rounded-2xl shadow-xl p-6">
+                <h2 className="text-xl font-bold text-foreground mb-3">Your Question:</h2>
+                <p className="text-lg text-muted-foreground leading-relaxed">{currentQuestion}</p>
               </div>
               
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl shadow-xl p-8 text-center">
-                <div className="text-5xl font-bold text-white mb-2">{formatTime(timeLeft)}</div>
-                <p className="text-white/90 font-semibold">
+              <div className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl shadow-xl p-8 text-center">
+                <div className="text-5xl font-bold text-foreground font-mono mb-2">{formatTime(timeLeft)}</div>
+                <p className="text-muted-foreground font-semibold">
                   {sessionPhase === 'preparation' ? 'Prepare your answer' : 'Recording your response'}
                 </p>
               </div>
             </div>
 
             {/* Right side - Video Feed - ONLY RENDER DURING PREP/RECORDING */}
-            <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
+            <div className="bg-secondary rounded-2xl overflow-hidden shadow-2xl border-2 border-border">
               {(sessionPhase === 'preparation' || sessionPhase === 'recording') && (
                 <video
                   ref={videoRef}
@@ -287,26 +287,26 @@ function InterviewSessionContent() {
 
         {sessionPhase === 'completed' && recordedBlob && (
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">🎉 Great job!</h3>
-              <p className="text-slate-600 mb-6">Your interview session has been recorded successfully.</p>
+            <div className="bg-card border border-border rounded-2xl shadow-xl p-8 mb-6">
+              <h3 className="text-2xl font-bold text-foreground mb-4">🎉 Great job!</h3>
+              <p className="text-muted-foreground mb-6">Your interview session has been recorded successfully.</p>
               
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={downloadRecording}
-                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors shadow-lg"
+                  className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all shadow-[0_0_20px_oklch(0.72_0.19_180/0.3)] hover:shadow-[0_0_30px_oklch(0.72_0.19_180/0.5)]"
                 >
                   Download Recording
                 </button>
                 <button
                   onClick={() => router.push('/interview')}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-lg"
+                  className="px-6 py-3 bg-secondary hover:bg-secondary/80 text-foreground font-bold rounded-xl transition-colors border border-border"
                 >
                   Practice Another
                 </button>
                 <button
                   onClick={() => router.push('/reports')}
-                  className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors shadow-lg"
+                  className="px-6 py-3 bg-secondary hover:bg-secondary/80 text-foreground font-bold rounded-xl transition-colors border border-border"
                 >
                   View Reports
                 </button>
@@ -314,9 +314,9 @@ function InterviewSessionContent() {
             </div>
 
             {/* Recorded Video Preview */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h3 className="text-xl font-bold text-slate-900 mb-4">Your Recording</h3>
-              <div className="bg-slate-900 rounded-lg overflow-hidden">
+            <div className="bg-card border border-border rounded-2xl shadow-xl p-6">
+              <h3 className="text-xl font-bold text-foreground mb-4">Your Recording</h3>
+              <div className="bg-secondary rounded-lg overflow-hidden border border-border">
                 <video
                   src={URL.createObjectURL(recordedBlob)}
                   controls
@@ -330,7 +330,7 @@ function InterviewSessionContent() {
         <div className="text-center mt-8">
           <button
             onClick={() => router.push('/interview')}
-            className="text-white/80 hover:text-white transition-colors font-semibold"
+            className="text-muted-foreground hover:text-foreground transition-colors font-semibold"
           >
             ← Back to Interview Selection
           </button>
@@ -343,8 +343,8 @@ function InterviewSessionContent() {
 export default function InterviewSessionPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pt-20 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+        <div className="text-foreground text-xl">Loading...</div>
       </div>
     }>
       <InterviewSessionContent />

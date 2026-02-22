@@ -25,11 +25,20 @@ desktop.ini
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
+components/hackflow
+components/ui
+components/cta-section.tsx
+components/hero.tsx
+components/features.tsx
+components/metrics.tsx
+components/tech-stack.tsx
+components/journey.tsx
 # local env files
 .env*.local
 .env
-
+proto
+pnpm-lock.yaml
+prototype.mp4
 # vercel
 .vercel
 # typescript

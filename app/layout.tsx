@@ -26,7 +26,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <MantineProvider>
-          <div className="min-h-screen bg-slate-50">
+          <div className="min-h-screen bg-background">
             <AuthProvider>
               <ScrollToTop />
               <Navbar />

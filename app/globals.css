@@ -1,3 +1,123 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: oklch(0.07 0.01 260);
+    --foreground: oklch(0.97 0 0);
+    --card: oklch(0.12 0.01 260);
+    --card-foreground: oklch(0.97 0 0);
+    --popover: oklch(0.12 0.01 260);
+    --popover-foreground: oklch(0.97 0 0);
+    --primary: oklch(0.72 0.19 180);
+    --primary-foreground: oklch(0.07 0.01 260);
+    --secondary: oklch(0.18 0.01 260);
+    --secondary-foreground: oklch(0.90 0 0);
+    --muted: oklch(0.18 0.01 260);
+    --muted-foreground: oklch(0.60 0.01 260);
+    --accent: oklch(0.72 0.19 180);
+    --accent-foreground: oklch(0.07 0.01 260);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.97 0 0);
+    --border: oklch(0.22 0.01 260);
+    --input: oklch(0.22 0.01 260);
+    --ring: oklch(0.72 0.19 180);
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes slide-up {
+  0% { transform: translateY(40px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Animation utilities */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.8s ease-out forwards;
+}
+
+.animate-shimmer {
+  animation: shimmer 3s linear infinite;
+}
+
+/* Glow effects */
+.glow-border {
+  box-shadow: 0 0 20px oklch(0.72 0.19 180 / 0.15), inset 0 0 20px oklch(0.72 0.19 180 / 0.05);
+}
+
+.glow-text {
+  text-shadow: 0 0 40px oklch(0.72 0.19 180 / 0.5);
+}
+
+/* Grid background */
+.grid-bg {
+  background-image: 
+    linear-gradient(oklch(0.72 0.19 180 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.72 0.19 180 / 0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Noise texture */
+.noise-bg {
+  position: relative;
+}
+.noise-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
