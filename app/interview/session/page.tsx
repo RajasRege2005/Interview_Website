@@ -75,11 +75,9 @@ function InterviewSessionContent() {
     return questions[Math.floor(Math.random() * questions.length)]
   }
 
-  // Single centralized camera cleanup function
   const stopCamera = () => {
     console.log('🛑 Stopping camera...')
     
-    // Stop all media tracks
     if (streamRef.current) {
       const tracks = streamRef.current.getTracks()
       tracks.forEach(track => {
@@ -89,7 +87,6 @@ function InterviewSessionContent() {
       streamRef.current = null
     }
 
-    // Clear video element
     if (videoRef.current) {
       videoRef.current.pause()
       videoRef.current.srcObject = null
@@ -97,7 +94,6 @@ function InterviewSessionContent() {
       videoRef.current.load()
     }
 
-    // Clear MediaRecorder
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current = null
     }
@@ -191,7 +187,7 @@ function InterviewSessionContent() {
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop() // This triggers onstop which calls stopCamera()
+      mediaRecorderRef.current.stop() 
     }
     setIsRecording(false)
   }
@@ -260,7 +256,6 @@ function InterviewSessionContent() {
 
         {(sessionPhase === 'preparation' || sessionPhase === 'recording') && (
           <div className="grid lg:grid-cols-2 gap-6">
-            {/* Left side - Question and Timer */}
             <div className="space-y-6">
               <div className="bg-white rounded-2xl shadow-xl p-6">
                 <h2 className="text-xl font-bold text-slate-900 mb-3">Your Question:</h2>
