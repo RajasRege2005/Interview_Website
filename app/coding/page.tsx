@@ -4,10 +4,12 @@ import React, { useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { useScrollAnimation } from '@/hooks/useScrollAnimation'
 import { Card } from '@/components/ui/card'
 export default function InterviewPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const categoriesAnimation = useScrollAnimation()
 
   useEffect(() => {
     if (!loading && !user) {
@@ -49,9 +51,18 @@ export default function InterviewPage() {
   ]
 
   return (
-    <div className="mt-0 min-h-screen bg-background noise-bg pt-20 pb-16">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-12 mt-8">
+    <div className="mt-0 min-h-screen bg-background noise-bg pt-20 pb-16 relative overflow-hidden">
+      {/* Floating orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 rounded-full bg-primary/5 blur-3xl animate-float" />
+        <div
+          className="absolute bottom-1/4 left-1/3 w-80 h-80 rounded-full bg-primary/8 blur-3xl animate-float"
+          style={{ animationDelay: '3s' }}
+        />
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 relative z-10">
+        <div className="text-center mb-12 mt-8 animate-slide-up">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
             Choose Your Interview Type
           </h1>
@@ -61,9 +72,15 @@ export default function InterviewPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+        <div ref={categoriesAnimation.ref} className="grid md:grid-cols-3 gap-6 mb-12">
           {interviewCategories.map((category, index) => (
-            <div key={index} className="bg-card border border-border rounded-xl shadow-sm p-8 hover:border-primary/30 hover:shadow-[0_0_20px_oklch(0.72_0.19_180/0.1)] transition-all duration-300 transform hover:scale-[1.02]">
+            <div 
+              key={index} 
+              className={`bg-card border border-border rounded-xl shadow-sm p-8 hover:border-primary/30 hover:shadow-[0_0_20px_oklch(0.72_0.19_180/0.1)] transition-all duration-700 transform hover:scale-[1.02] ${
+                categoriesAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+              }`}
+              style={{ transitionDelay: categoriesAnimation.isVisible ? `${index * 150}ms` : '0ms' }}
+            >
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-foreground mb-4">{category.title}</h3>
                 <p className="text-muted-foreground mb-6">{category.description}</p>

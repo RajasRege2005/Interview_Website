@@ -3,15 +3,15 @@ import { Github, Twitter, Linkedin } from "lucide-react"
 const footerLinks = [
   {
     heading: "Product",
-    links: ["Features", "How It Works", "Pricing", "Changelog"],
+    links: ["Mock Interviews", "Coding Practice", "Performance Reports", "Pricing"],
   },
   {
     heading: "Resources",
-    links: ["Documentation", "API Reference", "Case Studies", "Blog"],
+    links: ["Interview Tips", "Question Bank", "Success Stories", "Blog"],
   },
   {
     heading: "Company",
-    links: ["About", "Careers", "Contact", "Press Kit"],
+    links: ["About", "Contact", "Help Center", "Careers"],
   },
   {
     heading: "Legal",
@@ -35,7 +35,7 @@ export function Footer() {
                 </svg>
               </div>
               <span className="text-sm font-semibold text-foreground">
-                HackFlow <span className="text-primary font-mono">360</span>
+                Rehearse <span className="text-primary font-mono">AI</span>
               </span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
@@ -55,7 +55,6 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Links */}
           {footerLinks.map((group) => (
             <div key={group.heading}>
               <h4 className="text-sm font-semibold text-foreground mb-4">{group.heading}</h4>
@@ -77,10 +76,7 @@ export function Footer() {
 
         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <span className="text-xs text-muted-foreground">
-            {"2026 HackFlow 360. All rights reserved."}
-          </span>
-          <span className="text-xs text-muted-foreground font-mono">
-            {"v2.0.0-beta // Built with Next.js"}
+            {"2026 RehearseAI. All rights reserved."}
           </span>
         </div>
       </div>
