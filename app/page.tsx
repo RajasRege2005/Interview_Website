@@ -10,7 +10,7 @@ import {
   BarChart3, 
   BookOpen 
 } from "lucide-react"
-import { Footer } from '@/components/footer'
+
 export default function Home() {
   const { user } = useAuth()
   const featuresAnimation = useScrollAnimation()
