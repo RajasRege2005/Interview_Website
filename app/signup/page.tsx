@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -11,8 +11,15 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signUp, signInWithGoogle } = useAuth()
+  const { signUp, signInWithGoogle, user } = useAuth()
   const router = useRouter()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      router.replace('/interview')
+    }
+  }, [user, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,7 +35,8 @@ export default function SignupPage() {
     try {
       await signUp(email, password, name)
       console.log('Signup successful!')
-      router.push('/interview')
+      // Don't navigate here - useEffect will handle it when user state updates
+      // Keep loading state true during redirect
     } catch (err: any) {
       console.error('Signup error:', err)
       const errorMessage = err.message || err.error_description || 'Failed to create account'
@@ -42,7 +50,6 @@ export default function SignupPage() {
       } else {
         setError(errorMessage)
       }
-    } finally {
       setLoading(false)
     }
   }

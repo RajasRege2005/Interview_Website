@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import '@mantine/core/styles.css';
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import ScrollToTop from "@/components/ScrollToTop";
-import { MantineProvider, ColorSchemeScript } from '@mantine/core';
 import { Footer } from "@/components/footer";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -21,22 +20,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <ColorSchemeScript />
-      </head>
       <body className={inter.className}>
-        <MantineProvider>
-          <div className="min-h-screen bg-background">
-            <AuthProvider>
-              <ScrollToTop />
-              <Navbar />
-              <div className="pt-20">
-                {children}
-              </div>
-              <Footer />
-            </AuthProvider>
-          </div>
-        </MantineProvider>
+        <div className="min-h-screen bg-background">
+          <AuthProvider>
+            <ScrollToTop />
+            <Navbar />
+            <div className="pt-20">
+              {children}
+            </div>
+            <Footer />
+          </AuthProvider>
+        </div>
       </body>
     </html>
   );

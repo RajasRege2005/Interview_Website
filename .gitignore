@@ -44,3 +44,4 @@ prototype.mp4
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+AUDIO_ENHANCEMENT_GUIDE.md

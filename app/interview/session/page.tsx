@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { extractAudioFromVideo, analyzeAudio, AudioAnalysisResult } from '@/lib/audioUtils'
 
 function InterviewSessionContent() {
   const { user, loading } = useAuth()
@@ -15,6 +16,8 @@ function InterviewSessionContent() {
   const [isRecording, setIsRecording] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState('')
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<AudioAnalysisResult | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -169,10 +172,13 @@ function InterviewSessionContent() {
       }
 
       mediaRecorder.onstop = () => {
+        console.log('📹 MediaRecorder stopped, saving blob...')
         const blob = new Blob(chunks, { type: 'video/webm' })
         setRecordedBlob(blob)
-        stopCamera()
         setSessionPhase('completed')
+        
+        // Ensure camera is stopped even if stopRecording didn't do it
+        stopCamera()
       }
 
       mediaRecorder.start()
@@ -186,9 +192,11 @@ function InterviewSessionContent() {
   }
 
   const stopRecording = () => {
+    
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop() 
+      mediaRecorderRef.current.stop()
     }
+    
     setIsRecording(false)
   }
 
@@ -201,6 +209,25 @@ function InterviewSessionContent() {
       a.download = `interview-${Date.now()}.webm`
       a.click()
       URL.revokeObjectURL(url)
+    }
+  }
+
+  const handleAnalyzeAudio = async () => {
+    if (!recordedBlob) {
+      alert('No recording available to analyze');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const audioBlob = await extractAudioFromVideo(recordedBlob);
+      const result = await analyzeAudio(audioBlob);
+      
+      setAnalysisResult(result);
+    } catch (error) {
+      console.error('Audio analysis error:', error);
+    } finally {
+      setIsAnalyzing(false);
     }
   }
 
@@ -299,6 +326,13 @@ function InterviewSessionContent() {
                   Download Recording
                 </button>
                 <button
+                  onClick={handleAnalyzeAudio}
+                  disabled={isAnalyzing}
+                  className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)]"
+                >
+                  {isAnalyzing ? 'Analyzing...' : 'Analyze Delivery'}
+                </button>
+                <button
                   onClick={() => router.push('/interview')}
                   className="px-6 py-3 bg-secondary hover:bg-secondary/80 text-foreground font-bold rounded-xl transition-colors border border-border"
                 >
@@ -312,6 +346,97 @@ function InterviewSessionContent() {
                 </button>
               </div>
             </div>
+
+            {/* Audio Analysis Results */}
+            {analysisResult && (
+              <div className="bg-card border border-border rounded-2xl shadow-xl p-8 mb-6">
+                <h3 className="text-2xl font-bold text-foreground mb-6">Delivery Analysis</h3>
+                
+                {/* No Speech Warning */}
+                {analysisResult.note && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6 mb-6">
+                    <h4 className="font-bold text-yellow-600 mb-2">⚠️ {analysisResult.note}</h4>
+                    <p className="text-muted-foreground text-sm">
+                      The analysis could not detect any speech in your recording. Please ensure your microphone is working and speak clearly during the interview.
+                    </p>
+                  </div>
+                )}
+                
+                {/* Transcript Display */}
+                {analysisResult.transcript && analysisResult.transcript.length > 0 && (
+                  <div className="bg-secondary/50 rounded-xl p-6 mb-6">
+                    <h4 className="font-bold text-foreground mb-3">📝 Your Response</h4>
+                    <p className="text-muted-foreground leading-relaxed">{analysisResult.transcript}</p>
+                    {analysisResult.word_count && (
+                      <div className="text-sm text-muted-foreground mt-3">
+                        Word count: {analysisResult.word_count}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                  <div className="bg-secondary/50 rounded-xl p-4">
+                    <div className="text-sm text-muted-foreground mb-1">Delivery Score</div>
+                    <div className="text-3xl font-bold text-primary">{analysisResult.delivery_score}/100</div>
+                  </div>
+                  
+                  <div className="bg-secondary/50 rounded-xl p-4">
+                    <div className="text-sm text-muted-foreground mb-1">Speech Rate</div>
+                    <div className="text-3xl font-bold text-foreground">{analysisResult.speech_rate}</div>
+                    <div className="text-xs text-muted-foreground">words/min</div>
+                  </div>
+                  
+                  <div className="bg-secondary/50 rounded-xl p-4">
+                    <div className="text-sm text-muted-foreground mb-1">Long Pauses</div>
+                    <div className="text-3xl font-bold text-foreground">{analysisResult.long_pauses}</div>
+                    <div className="text-xs text-muted-foreground">pauses &gt; 0.8s</div>
+                  </div>
+                  
+                  <div className="bg-secondary/50 rounded-xl p-4">
+                    <div className="text-sm text-muted-foreground mb-1">Pitch Variance</div>
+                    <div className="text-3xl font-bold text-foreground">{analysisResult.pitch_variance}</div>
+                    <div className="text-xs text-muted-foreground">confidence signal</div>
+                  </div>
+                  
+                  <div className="bg-secondary/50 rounded-xl p-4">
+                    <div className="text-sm text-muted-foreground mb-1">Energy Variation</div>
+                    <div className="text-3xl font-bold text-foreground">{analysisResult.energy_std}</div>
+                  </div>
+                </div>
+
+                {/* Feedback based on scores */}
+                <div className="bg-primary/10 border border-primary/30 rounded-xl p-6">
+                  <h4 className="font-bold text-foreground mb-3">💡 Feedback</h4>
+                  <ul className="space-y-2 text-muted-foreground">
+                    {analysisResult.delivery_score === 0 && analysisResult.note && (
+                      <li className="text-yellow-600 font-semibold">⚠️ No speech detected - please check your microphone and speak during recording</li>
+                    )}
+                    {analysisResult.speech_rate > 0 && analysisResult.speech_rate < 130 && (
+                      <li>• Try speaking a bit faster - aim for 130-170 words per minute</li>
+                    )}
+                    {analysisResult.speech_rate > 170 && (
+                      <li>• Slow down slightly - you're speaking quite fast</li>
+                    )}
+                    {analysisResult.long_pauses > 4 && (
+                      <li>• Reduce long pauses - practice your responses to improve flow</li>
+                    )}
+                    {analysisResult.pitch_variance < 80 && analysisResult.pitch_variance > 0 && (
+                      <li>• Add more vocal variety - vary your pitch to show enthusiasm and engagement</li>
+                    )}
+                    {analysisResult.delivery_score >= 80 && (
+                      <li className="text-green-600 font-semibold">✓ Excellent delivery! Keep up the great work!</li>
+                    )}
+                    {analysisResult.delivery_score >= 60 && analysisResult.delivery_score < 80 && (
+                      <li>• Good delivery overall - review the specific metrics above for areas to improve</li>
+                    )}
+                    {analysisResult.delivery_score > 0 && analysisResult.delivery_score < 60 && (
+                      <li>• Focus on improving the areas highlighted above - practice makes perfect!</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            )}
 
             {/* Recorded Video Preview */}
             <div className="bg-card border border-border rounded-2xl shadow-xl p-6">

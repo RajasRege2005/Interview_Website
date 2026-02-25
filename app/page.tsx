@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { useScrollAnimation } from '@/hooks/useScrollAnimation'
 import { ArrowRight, Zap } from 'lucide-react'
 import { 
   Briefcase, 
@@ -10,18 +9,14 @@ import {
   BarChart3, 
   BookOpen 
 } from "lucide-react"
-
 export default function Home() {
   const { user } = useAuth()
-  const featuresAnimation = useScrollAnimation()
-  const howItWorksAnimation = useScrollAnimation()
-  const ctaAnimation = useScrollAnimation()
   
   const features = [
-    { icon:<Briefcase className="w-6 h-6 bg-white " />, title: 'Realistic Mock Interviews', desc: 'Practice with industry-standard questions and real interview scenarios' },
-    { icon:<BrainCircuit className="w-6 h-6 bg-white" />, title: 'AI-Powered Feedback', desc: 'Get instant, detailed analysis of your responses and body language' },
-    { icon:<BarChart3 className="w-6 h-6 bg-white" />, title: 'Performance Analytics', desc: 'Track your progress with comprehensive reports and insights' },
-    { icon:<BookOpen className="w-6 h-6 bg-white" />, title: 'Expert Resources', desc: 'Access curated tips and strategies from top industry professionals' }
+    { icon:<Briefcase className="w-6 h-6 bg-black " />, title: 'Realistic Mock Interviews', desc: 'Practice with industry-standard questions and real interview scenarios' },
+    { icon:<BrainCircuit className="w-6 h-6 bg-black" />, title: 'AI-Powered Feedback', desc: 'Get instant, detailed analysis of your responses and body language' },
+    { icon:<BarChart3 className="w-6 h-6 bg-black" />, title: 'Performance Analytics', desc: 'Track your progress with comprehensive reports and insights' },
+    { icon:<BookOpen className="w-6 h-6 bg-black" />, title: 'Expert Resources', desc: 'Access curated tips and strategies from top industry professionals' }
   ]
 
   const scrollToSection = (sectionId: string) => {
@@ -37,14 +32,12 @@ export default function Home() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden grid-bg">
         {/* Floating orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-primary/5 blur-3xl animate-float" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
           <div
-            className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-primary/8 blur-3xl animate-float"
-            style={{ animationDelay: '2s' }}
+            className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-primary/8 blur-3xl"
           />
           <div
-            className="absolute top-1/2 left-1/2 w-64 h-64 rounded-full bg-primary/3 blur-3xl animate-float"
-            style={{ animationDelay: '4s' }}
+            className="absolute top-1/2 left-1/2 w-64 h-64 rounded-full bg-primary/3 blur-3xl"
           />
         </div>
 
@@ -53,7 +46,7 @@ export default function Home() {
 
         <div className="relative z-10 mx-auto max-w-5xl px-6 pt-32 pb-20 text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 backdrop-blur-sm animate-slide-up">
+          <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 backdrop-blur-sm">
             <Zap className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium text-primary font-mono">AI-Powered Platform</span>
             <span className="text-sm text-muted-foreground">— Interview Mastery</span>
@@ -61,8 +54,7 @@ export default function Home() {
 
           {/* Main heading */}
           <h1
-            className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-foreground leading-[1.05] mb-6 animate-slide-up text-balance"
-            style={{ animationDelay: '0.1s' }}
+            className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-foreground leading-[1.05] mb-6 text-balance"
           >
             Ace Your Next
             <br />
@@ -71,8 +63,7 @@ export default function Home() {
 
           {/* Subtitle */}
           <p
-            className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground leading-relaxed mb-10 animate-slide-up text-pretty"
-            style={{ animationDelay: '0.2s' }}
+            className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground leading-relaxed mb-10 text-pretty"
           >
             Practice with AI, get instant feedback, and land your dream role with confidence. 
             Master behavioral, technical, and situational interviews.
@@ -80,8 +71,7 @@ export default function Home() {
 
           {/* CTAs */}
           <div
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up"
-            style={{ animationDelay: '0.3s' }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Link href={user ? '/interview' : '/signup'}>
               <button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_30px_oklch(0.72_0.19_180/0.4)] hover:shadow-[0_0_50px_oklch(0.72_0.19_180/0.6)] transition-all text-base px-8 py-4 rounded-xl font-semibold inline-flex items-center gap-2">
@@ -99,8 +89,7 @@ export default function Home() {
 
           {/* Stats bar */}
           <div
-            className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x md:divide-border animate-slide-up"
-            style={{ animationDelay: '0.5s' }}
+            className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x md:divide-border"
           >
             {[
               { value: '95%', label: 'Success Rate' },
@@ -122,8 +111,8 @@ export default function Home() {
 
       {/* Features Section */}
       <section id="features" className="py-24 relative">
-        <div ref={featuresAnimation.ref} className="max-w-6xl mx-auto px-6">
-          <div className={`text-center mb-16 transition-all duration-1000 ${featuresAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
               Everything You Need to Succeed
             </h2>
@@ -135,8 +124,7 @@ export default function Home() {
             {features.map((feature, index) => (
               <div 
                 key={index} 
-                className={`group bg-card border border-border rounded-xl p-8 hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-[0_0_20px_oklch(0.72_0.19_180)] ${featuresAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-                style={{transitionDelay: featuresAnimation.isVisible ? `${100}ms` : '0ms'}}
+                className="group bg-card border border-border rounded-xl p-8 hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-[0_0_20px_oklch(0.72_0.19_180)]"
               >
                 <div className="text-5xl mb-4 ">{feature.icon}</div>
                 <h3 className="text-2xl font-bold text-foreground mb-3">{feature.title}</h3>
@@ -148,8 +136,8 @@ export default function Home() {
       </section>
 
       <section id="how-it-works" className="py-24 relative">
-        <div ref={howItWorksAnimation.ref} className="max-w-6xl mx-auto px-6">
-          <div className={`text-center mb-16 transition-all duration-1000 ${howItWorksAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
               How It Works
             </h2>
@@ -165,8 +153,7 @@ export default function Home() {
             ]).map((step, index) => (
               <div 
                 key={index} 
-                className={`relative transition-all duration-700 ${howItWorksAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-                style={{transitionDelay: howItWorksAnimation.isVisible ? `${index * 200}ms` : '0ms'}}
+                className="relative"
               >
                 <div className="text-7xl font-bold text-primary/10 mb-4 font-mono glow-text text-[oklch(0.72_0.19_180)]">{step.num}</div>
                 <h3 className="text-2xl font-bold text-foreground mb-3">{step.title}</h3>
@@ -179,7 +166,7 @@ export default function Home() {
 
       <section className="py-24 relative">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,oklch(0.72_0.19_180/0.1)_0%,transparent_70%)]" />
-        <div ref={ctaAnimation.ref} className={`relative max-w-4xl mx-auto px-6 text-center transition-all duration-1000 ${ctaAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className="relative max-w-4xl mx-auto px-6 text-center">
           <div className="bg-card border border-border rounded-2xl p-12 shadow-xl glow-border">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
               Ready to Land Your Dream Job?

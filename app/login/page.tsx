@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -10,8 +10,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signIn, signInWithGoogle } = useAuth()
+  const { signIn, signInWithGoogle, user } = useAuth()
   const router = useRouter()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      router.replace('/interview')
+    }
+  }, [user, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,10 +27,9 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password)
-      router.push('/interview')
+      // Don't navigate here - useEffect will handle it when user state updates
     } catch (err: any) {
       setError(err.message || 'Failed to login. Please check your credentials.')
-    } finally {
       setLoading(false)
     }
   }
