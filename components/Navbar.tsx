@@ -7,11 +7,16 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 
 export default function Navbar() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, loading } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20)

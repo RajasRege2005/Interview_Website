@@ -4,6 +4,9 @@ import React, { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { extractAudioFromVideo, analyzeAudio, AudioAnalysisResult } from '@/lib/audioUtils'
+import AttentionTracker, { AttentionMetrics } from '@/components/AttentionTracker'
+import TranscriptCapture from '@/components/TranscriptCapture'
+import InterviewAnalysisResults from '@/components/InterviewAnalysisResults'
 
 function InterviewSessionContent() {
   const { user, loading } = useAuth()
@@ -18,6 +21,8 @@ function InterviewSessionContent() {
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null)
   const [analysisResult, setAnalysisResult] = useState<AudioAnalysisResult | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [liveTranscript, setLiveTranscript] = useState<string>('')
+  const [attentionMetrics, setAttentionMetrics] = useState<AttentionMetrics | null>(null)
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -171,7 +176,7 @@ function InterviewSessionContent() {
         }
       }
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         console.log('📹 MediaRecorder stopped, saving blob...')
         const blob = new Blob(chunks, { type: 'video/webm' })
         setRecordedBlob(blob)
@@ -179,6 +184,20 @@ function InterviewSessionContent() {
         
         // Ensure camera is stopped even if stopRecording didn't do it
         stopCamera()
+        
+        // Automatically analyze audio
+        console.log('🎤 Starting automatic audio analysis...')
+        setIsAnalyzing(true)
+        try {
+          const audioBlob = await extractAudioFromVideo(blob)
+          const result = await analyzeAudio(audioBlob)
+          setAnalysisResult(result)
+          console.log('✅ Audio analysis complete')
+        } catch (error) {
+          console.error('❌ Audio analysis error:', error)
+        } finally {
+          setIsAnalyzing(false)
+        }
       }
 
       mediaRecorder.start()
@@ -212,24 +231,7 @@ function InterviewSessionContent() {
     }
   }
 
-  const handleAnalyzeAudio = async () => {
-    if (!recordedBlob) {
-      alert('No recording available to analyze');
-      return;
-    }
 
-    setIsAnalyzing(true);
-    try {
-      const audioBlob = await extractAudioFromVideo(recordedBlob);
-      const result = await analyzeAudio(audioBlob);
-      
-      setAnalysisResult(result);
-    } catch (error) {
-      console.error('Audio analysis error:', error);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -282,8 +284,9 @@ function InterviewSessionContent() {
         )}
 
         {(sessionPhase === 'preparation' || sessionPhase === 'recording') && (
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="space-y-6">
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left side - Question and Timer */}
+            <div className="lg:col-span-2 space-y-6">
               <div className="bg-card border border-border rounded-2xl shadow-xl p-6">
                 <h2 className="text-xl font-bold text-foreground mb-3">Your Question:</h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">{currentQuestion}</p>
@@ -295,25 +298,59 @@ function InterviewSessionContent() {
                   {sessionPhase === 'preparation' ? 'Prepare your answer' : 'Recording your response'}
                 </p>
               </div>
+
+              {/* Video Feed */}
+              <div className="bg-secondary rounded-2xl overflow-hidden shadow-2xl border-2 border-border">
+                {(sessionPhase === 'preparation' || sessionPhase === 'recording') && (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full aspect-video"
+                  />
+                )}
+              </div>
             </div>
 
-            {/* Right side - Video Feed - ONLY RENDER DURING PREP/RECORDING */}
-            <div className="bg-secondary rounded-2xl overflow-hidden shadow-2xl border-2 border-border">
-              {(sessionPhase === 'preparation' || sessionPhase === 'recording') && (
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full aspect-video"
-                />
+            {/* Right side - Live Metrics */}
+            <div className="space-y-6">
+              {/* Attention Tracker - Running in background, UI hidden */}
+              <AttentionTracker 
+                videoRef={videoRef}
+                isActive={sessionPhase === 'recording'}
+                showUI={false}
+                onMetricsUpdate={setAttentionMetrics}
+              />
+
+              {/* Recording Status Indicator */}
+              {sessionPhase === 'recording' && (
+                <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground">Tracking Active</h3>
+                      <p className="text-xs text-muted-foreground">Recording attention metrics...</p>
+                    </div>
+                  </div>
+                </div>
               )}
+
+              {/* Transcript Capture - Active during recording */}
+              <TranscriptCapture 
+                isActive={sessionPhase === 'recording'}
+                onTranscriptUpdate={setLiveTranscript}
+              />
             </div>
           </div>
         )}
 
         {sessionPhase === 'completed' && recordedBlob && (
           <div className="space-y-6">
+            {/* Success Message */}
             <div className="bg-card border border-border rounded-2xl shadow-xl p-8 mb-6">
               <h3 className="text-2xl font-bold text-foreground mb-4">🎉 Great job!</h3>
               <p className="text-muted-foreground mb-6">Your interview session has been recorded successfully.</p>
@@ -324,13 +361,6 @@ function InterviewSessionContent() {
                   className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all shadow-[0_0_20px_oklch(0.72_0.19_180/0.3)] hover:shadow-[0_0_30px_oklch(0.72_0.19_180/0.5)]"
                 >
                   Download Recording
-                </button>
-                <button
-                  onClick={handleAnalyzeAudio}
-                  disabled={isAnalyzing}
-                  className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)]"
-                >
-                  {isAnalyzing ? 'Analyzing...' : 'Analyze Delivery'}
                 </button>
                 <button
                   onClick={() => router.push('/interview')}
@@ -345,98 +375,23 @@ function InterviewSessionContent() {
                   View Reports
                 </button>
               </div>
+              
+              {isAnalyzing && (
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mt-4">
+                  <div className="flex items-center gap-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                    <span className="text-blue-600 font-semibold">🎤 Analyzing your audio delivery...</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Audio Analysis Results */}
-            {analysisResult && (
-              <div className="bg-card border border-border rounded-2xl shadow-xl p-8 mb-6">
-                <h3 className="text-2xl font-bold text-foreground mb-6">Delivery Analysis</h3>
-                
-                {/* No Speech Warning */}
-                {analysisResult.note && (
-                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6 mb-6">
-                    <h4 className="font-bold text-yellow-600 mb-2">⚠️ {analysisResult.note}</h4>
-                    <p className="text-muted-foreground text-sm">
-                      The analysis could not detect any speech in your recording. Please ensure your microphone is working and speak clearly during the interview.
-                    </p>
-                  </div>
-                )}
-                
-                {/* Transcript Display */}
-                {analysisResult.transcript && analysisResult.transcript.length > 0 && (
-                  <div className="bg-secondary/50 rounded-xl p-6 mb-6">
-                    <h4 className="font-bold text-foreground mb-3">📝 Your Response</h4>
-                    <p className="text-muted-foreground leading-relaxed">{analysisResult.transcript}</p>
-                    {analysisResult.word_count && (
-                      <div className="text-sm text-muted-foreground mt-3">
-                        Word count: {analysisResult.word_count}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                  <div className="bg-secondary/50 rounded-xl p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Delivery Score</div>
-                    <div className="text-3xl font-bold text-primary">{analysisResult.delivery_score}/100</div>
-                  </div>
-                  
-                  <div className="bg-secondary/50 rounded-xl p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Speech Rate</div>
-                    <div className="text-3xl font-bold text-foreground">{analysisResult.speech_rate}</div>
-                    <div className="text-xs text-muted-foreground">words/min</div>
-                  </div>
-                  
-                  <div className="bg-secondary/50 rounded-xl p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Long Pauses</div>
-                    <div className="text-3xl font-bold text-foreground">{analysisResult.long_pauses}</div>
-                    <div className="text-xs text-muted-foreground">pauses &gt; 0.8s</div>
-                  </div>
-                  
-                  <div className="bg-secondary/50 rounded-xl p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Pitch Variance</div>
-                    <div className="text-3xl font-bold text-foreground">{analysisResult.pitch_variance}</div>
-                    <div className="text-xs text-muted-foreground">confidence signal</div>
-                  </div>
-                  
-                  <div className="bg-secondary/50 rounded-xl p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Energy Variation</div>
-                    <div className="text-3xl font-bold text-foreground">{analysisResult.energy_std}</div>
-                  </div>
-                </div>
-
-                {/* Feedback based on scores */}
-                <div className="bg-primary/10 border border-primary/30 rounded-xl p-6">
-                  <h4 className="font-bold text-foreground mb-3">💡 Feedback</h4>
-                  <ul className="space-y-2 text-muted-foreground">
-                    {analysisResult.delivery_score === 0 && analysisResult.note && (
-                      <li className="text-yellow-600 font-semibold">⚠️ No speech detected - please check your microphone and speak during recording</li>
-                    )}
-                    {analysisResult.speech_rate > 0 && analysisResult.speech_rate < 130 && (
-                      <li>• Try speaking a bit faster - aim for 130-170 words per minute</li>
-                    )}
-                    {analysisResult.speech_rate > 170 && (
-                      <li>• Slow down slightly - you're speaking quite fast</li>
-                    )}
-                    {analysisResult.long_pauses > 4 && (
-                      <li>• Reduce long pauses - practice your responses to improve flow</li>
-                    )}
-                    {analysisResult.pitch_variance < 80 && analysisResult.pitch_variance > 0 && (
-                      <li>• Add more vocal variety - vary your pitch to show enthusiasm and engagement</li>
-                    )}
-                    {analysisResult.delivery_score >= 80 && (
-                      <li className="text-green-600 font-semibold">✓ Excellent delivery! Keep up the great work!</li>
-                    )}
-                    {analysisResult.delivery_score >= 60 && analysisResult.delivery_score < 80 && (
-                      <li>• Good delivery overall - review the specific metrics above for areas to improve</li>
-                    )}
-                    {analysisResult.delivery_score > 0 && analysisResult.delivery_score < 60 && (
-                      <li>• Focus on improving the areas highlighted above - practice makes perfect!</li>
-                    )}
-                  </ul>
-                </div>
-              </div>
-            )}
+            {/* Comprehensive Analysis Results */}
+            <InterviewAnalysisResults
+              attentionMetrics={attentionMetrics}
+              audioAnalysis={analysisResult}
+              transcript={liveTranscript}
+            />
 
             {/* Recorded Video Preview */}
             <div className="bg-card border border-border rounded-2xl shadow-xl p-6">
