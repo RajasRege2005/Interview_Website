@@ -84,8 +84,6 @@ function InterviewSessionContent() {
   }
 
   const stopCamera = () => {
-    console.log('🛑 Stopping camera...')
-    
     if (streamRef.current) {
       const tracks = streamRef.current.getTracks()
       tracks.forEach(track => {
@@ -105,8 +103,6 @@ function InterviewSessionContent() {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current = null
     }
-
-    console.log('✓ Camera stopped')
   }
 
   useEffect(() => {
@@ -182,17 +178,13 @@ function InterviewSessionContent() {
         setRecordedBlob(blob)
         setSessionPhase('completed')
         
-        // Ensure camera is stopped even if stopRecording didn't do it
         stopCamera()
         
-        // Automatically analyze audio
-        console.log('🎤 Starting automatic audio analysis...')
         setIsAnalyzing(true)
         try {
           const audioBlob = await extractAudioFromVideo(blob)
           const result = await analyzeAudio(audioBlob)
           setAnalysisResult(result)
-          console.log('✅ Audio analysis complete')
         } catch (error) {
           console.error('❌ Audio analysis error:', error)
         } finally {
