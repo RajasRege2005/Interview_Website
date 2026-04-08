@@ -10,7 +10,6 @@ import librosa
 import warnings
 warnings.filterwarnings('ignore')
 
-# Custom JSON encoder to handle numpy types
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, (np.integer, np.int32, np.int64)):
@@ -85,7 +84,7 @@ def analyze_audio(audio_path):
         word_count = len(transcript.split())
         speech_rate = round((word_count / speaking_time) * 60, 1) if speaking_time > 0 else 0
         
-        intervals = librosa.effects.split(y, top_db=30)  # Higher threshold for noise reduction
+        intervals = librosa.effects.split(y, top_db=30)  
         
         if len(intervals) > 0:
             voiced_audio = []
@@ -93,7 +92,7 @@ def analyze_audio(audio_path):
                 voiced_audio.extend(y[start:end])
             voiced_audio = np.array(voiced_audio)
             
-            if len(voiced_audio) > sr * 0.5:  # At least 0.5 seconds
+            if len(voiced_audio) > sr * 0.5:  
                 f0, voiced_flag, voiced_probs = librosa.pyin(
                     voiced_audio,
                     fmin=librosa.note_to_hz('C2'),
@@ -105,14 +104,12 @@ def analyze_audio(audio_path):
             else:
                 pitch_variance = 0
             
-            # Energy analysis
             rms = librosa.feature.rms(y=voiced_audio)[0]
             energy_std = round(np.std(rms), 3)
         else:
             pitch_variance = 0
             energy_std = 0
         
-        # Calculate delivery score
         delivery_score = calculate_delivery_score(
             speech_rate, long_pauses, pitch_variance, energy_std, speaking_time
         )
@@ -147,11 +144,9 @@ def calculate_delivery_score(speech_rate, long_pauses, pitch_variance, energy_st
     """
     score = 100
     
-    # Penalize if no speech at all
     if speaking_time < 5:
         return 0
     
-    # Speech rate scoring (ideal: 130-170 wpm)
     if speech_rate < 110:
         score -= 20
     elif speech_rate < 130:
@@ -161,16 +156,13 @@ def calculate_delivery_score(speech_rate, long_pauses, pitch_variance, energy_st
     elif speech_rate > 170:
         score -= 5
     
-    # Pause penalties
     score -= min(long_pauses * 3, 20)
     
-    # Pitch variance (ideal: > 100)
     if pitch_variance < 50:
         score -= 15
     elif pitch_variance < 100:
         score -= 5
     
-    # Energy variation
     if energy_std < 0.01:
         score -= 10
     
