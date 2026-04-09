@@ -1,12 +1,19 @@
 'use client';
 import React from "react";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-const DashboardPage= ()=> {
-  const [progress, setProgress] = useState(0);
+export default function DashboardPage(){
 
+    const [progress, setProgress] = useState(0);
+    const {user, loading} = useAuth();
+    const router = useRouter();
   useEffect(() => {
-    setProgress(30);
+      if(!user && !loading){
+        router.push('/login');
+      }
+      setProgress(30);
   }, []);
 
   return (
@@ -15,5 +22,3 @@ const DashboardPage= ()=> {
     </div>
   )
 }
-
-export default DashboardPage;

@@ -277,7 +277,6 @@ function InterviewSessionContent() {
 
         {(sessionPhase === 'preparation' || sessionPhase === 'recording') && (
           <div className="grid lg:grid-cols-3 gap-6">
-            {/* Left side - Question and Timer */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-card border border-border rounded-2xl shadow-xl p-6">
                 <h2 className="text-xl font-bold text-foreground mb-3">Your Question:</h2>
@@ -291,7 +290,6 @@ function InterviewSessionContent() {
                 </p>
               </div>
 
-              {/* Video Feed */}
               <div className="bg-secondary rounded-2xl overflow-hidden shadow-2xl border-2 border-border">
                 {(sessionPhase === 'preparation' || sessionPhase === 'recording') && (
                   <video
@@ -305,9 +303,7 @@ function InterviewSessionContent() {
               </div>
             </div>
 
-            {/* Right side - Live Metrics */}
             <div className="space-y-6">
-              {/* Attention Tracker - Running in background, UI hidden */}
               <AttentionTracker 
                 videoRef={videoRef}
                 isActive={sessionPhase === 'recording'}
@@ -315,7 +311,6 @@ function InterviewSessionContent() {
                 onMetricsUpdate={setAttentionMetrics}
               />
 
-              {/* Recording Status Indicator */}
               {sessionPhase === 'recording' && (
                 <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4">
                   <div className="flex items-center gap-3">
@@ -331,7 +326,6 @@ function InterviewSessionContent() {
                 </div>
               )}
 
-              {/* Transcript Capture - Active during recording */}
               <TranscriptCapture 
                 isActive={sessionPhase === 'recording'}
                 onTranscriptUpdate={setLiveTranscript}
@@ -342,7 +336,6 @@ function InterviewSessionContent() {
 
         {sessionPhase === 'completed' && recordedBlob && (
           <div className="space-y-6">
-            {/* Success Message */}
             <div className="bg-card border border-border rounded-2xl shadow-xl p-8 mb-6">
               <h3 className="text-2xl font-bold text-foreground mb-4">🎉 Great job!</h3>
               <p className="text-muted-foreground mb-6">Your interview session has been recorded successfully.</p>
@@ -378,14 +371,12 @@ function InterviewSessionContent() {
               )}
             </div>
 
-            {/* Comprehensive Analysis Results */}
             <InterviewAnalysisResults
               attentionMetrics={attentionMetrics}
               audioAnalysis={analysisResult}
               transcript={liveTranscript}
             />
 
-            {/* Recorded Video Preview */}
             <div className="bg-card border border-border rounded-2xl shadow-xl p-6">
               <h3 className="text-xl font-bold text-foreground mb-4">Your Recording</h3>
               <div className="bg-secondary rounded-lg overflow-hidden border border-border">

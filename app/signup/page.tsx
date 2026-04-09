@@ -14,10 +14,9 @@ export default function SignupPage() {
   const { signUp, signInWithGoogle, user } = useAuth()
   const router = useRouter()
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      router.replace('/interview')
+      router.replace('/dashboard')
     }
   }, [user, router])
 
@@ -34,14 +33,10 @@ export default function SignupPage() {
 
     try {
       await signUp(email, password, name)
-      console.log('Signup successful!')
-      // Don't navigate here - useEffect will handle it when user state updates
-      // Keep loading state true during redirect
     } catch (err: any) {
       console.error('Signup error:', err)
       const errorMessage = err.message || err.error_description || 'Failed to create account'
       
-      // Check if user already exists
       if (errorMessage.toLowerCase().includes('already registered') || 
           errorMessage.toLowerCase().includes('already exists') ||
           errorMessage.toLowerCase().includes('user already exists')) {
@@ -60,7 +55,6 @@ export default function SignupPage() {
 
     try {
       await signInWithGoogle()
-      // Redirect handled by Supabase OAuth flow
     } catch (err: any) {
       setError(err.message || 'Failed to sign up with Google')
       setLoading(false)
