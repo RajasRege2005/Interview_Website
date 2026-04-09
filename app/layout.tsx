@@ -9,8 +9,11 @@ import { Footer } from "@/components/footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Interview Master - Practice & Excel",
+  title: "RehearseAI - Practice & Excel",
   description: "Master your interview skills with AI-powered feedback and analysis",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
