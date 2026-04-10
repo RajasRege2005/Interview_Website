@@ -13,7 +13,6 @@ export default function LoginPage() {
   const { signIn, signInWithGoogle, user } = useAuth()
   const router = useRouter()
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
       router.replace('/dashboard')
