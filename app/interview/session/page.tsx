@@ -8,6 +8,10 @@ import AttentionTracker, { AttentionMetrics } from '@/components/AttentionTracke
 import TranscriptCapture from '@/components/TranscriptCapture'
 import InterviewAnalysisResults from '@/components/InterviewAnalysisResults'
 
+if (typeof window !== 'undefined') {
+  (window as any)._globalActiveStreams = (window as any)._globalActiveStreams || new Set<MediaStream>();
+}
+
 function InterviewSessionContent() {
   const { user, loading } = useAuth()
   const searchParams = useSearchParams()
@@ -28,6 +32,19 @@ function InterviewSessionContent() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const sessionPhaseRef = useRef(sessionPhase);
+  useEffect(() => {
+    sessionPhaseRef.current = sessionPhase;
+  }, [sessionPhase]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -84,24 +101,49 @@ function InterviewSessionContent() {
   }
 
   const stopCamera = () => {
-    if (streamRef.current) {
-      const tracks = streamRef.current.getTracks()
-      tracks.forEach(track => {
-        track.enabled = false
-        track.stop()
-      })
-      streamRef.current = null
+    const killStream = (stream: MediaStream | null | undefined) => {
+      if (stream) {
+        try {
+          stream.getTracks().forEach(track => {
+            track.enabled = false;
+            track.stop();
+          });
+        } catch(e) {}
+        try {
+          if (typeof window !== 'undefined') {
+            (window as any)._globalActiveStreams.delete(stream);
+          }
+        } catch(e){}
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      (window as any)._globalActiveStreams.forEach((s: MediaStream) => killStream(s));
     }
 
+    killStream(streamRef.current);
+    streamRef.current = null;
+
     if (videoRef.current) {
-      videoRef.current.pause()
-      videoRef.current.srcObject = null
-      videoRef.current.src = ''
-      videoRef.current.load()
+      try {
+        videoRef.current.pause();
+        killStream(videoRef.current.srcObject as MediaStream | null);
+        videoRef.current.srcObject = null;
+        videoRef.current.removeAttribute('src');
+        videoRef.current.load();
+      } catch (err) {
+        console.error("Error stopping video element:", err);
+      }
     }
 
     if (mediaRecorderRef.current) {
-      mediaRecorderRef.current = null
+      if (mediaRecorderRef.current.state !== 'inactive') {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (e) {}
+      }
+      killStream(mediaRecorderRef.current.stream);
+      mediaRecorderRef.current = null;
     }
   }
 
@@ -150,13 +192,42 @@ function InterviewSessionContent() {
     startTimer(60, 'preparation')
   }
 
+  const isStartingRecordingRef = useRef(false);
+
   const startRecording = async () => {
+    if (isStartingRecordingRef.current) return;
+    isStartingRecordingRef.current = true;
     try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          track.enabled = false;
+          track.stop();
+        });
+        streamRef.current = null;
+      }
+
+      if (videoRef.current && videoRef.current.srcObject) {
+        const oldStream = videoRef.current.srcObject as MediaStream;
+        oldStream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: true, 
         audio: true 
       })
       
+      if (!isMountedRef.current || sessionPhaseRef.current === 'completed' || sessionPhaseRef.current === 'question') {
+        stream.getTracks().forEach(track => {
+          track.enabled = false;
+          track.stop();
+        });
+        return;
+      }
+      
+      if (typeof window !== 'undefined') {
+        (window as any)._globalActiveStreams.add(stream);
+      }
       streamRef.current = stream
       
       if (videoRef.current) {
@@ -175,10 +246,11 @@ function InterviewSessionContent() {
       mediaRecorder.onstop = async () => {
         console.log('📹 MediaRecorder stopped, saving blob...')
         const blob = new Blob(chunks, { type: 'video/webm' })
+        
+        try { stopCamera(); } catch(e) {}
+        
         setRecordedBlob(blob)
         setSessionPhase('completed')
-        
-        stopCamera()
         
         setIsAnalyzing(true)
         try {
@@ -196,19 +268,22 @@ function InterviewSessionContent() {
       mediaRecorderRef.current = mediaRecorder
       setIsRecording(true)
       startTimer(120, 'recording')
+      isStartingRecordingRef.current = false;
     } catch (error) {
       console.error('Error starting recording:', error)
       alert('Could not access camera/microphone. Please grant permissions.')
+      isStartingRecordingRef.current = false;
     }
   }
 
   const stopRecording = () => {
-    
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()
+      try { mediaRecorderRef.current.stop(); } catch(e) {}
     }
     
-    setIsRecording(false)
+    setIsRecording(false);
+    
+    stopCamera();
   }
 
 
@@ -337,7 +412,7 @@ function InterviewSessionContent() {
         {sessionPhase === 'completed' && recordedBlob && (
           <div className="space-y-6">
             <div className="bg-card border border-border rounded-2xl shadow-xl p-8 mb-6">
-              <h3 className="text-2xl font-bold text-foreground mb-4">🎉 Great job!</h3>
+              <h3 className="text-2xl font-bold text-foreground mb-4">Great job!</h3>
               <p className="text-muted-foreground mb-6">Your interview session has been recorded successfully.</p>
               
               <div className="flex flex-wrap gap-4">
@@ -365,7 +440,7 @@ function InterviewSessionContent() {
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mt-4">
                   <div className="flex items-center gap-3">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-                    <span className="text-blue-600 font-semibold">🎤 Analyzing your audio delivery...</span>
+                    <span className="text-blue-600 font-semibold">Analyzing your audio delivery...</span>
                   </div>
                 </div>
               )}

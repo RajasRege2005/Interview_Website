@@ -17,24 +17,20 @@ export default function InterviewAnalysisResults({
 }: InterviewAnalysisResultsProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'attention' | 'audio'>('overview');
 
-  // Calculate final combined score
   const calculateFinalScore = () => {
     let totalScore = 0;
     let componentsCount = 0;
 
-    // Attention score (50% weight if available)
     if (attentionMetrics) {
       totalScore += attentionMetrics.avgAttention * 0.5;
       componentsCount += 0.5;
     }
 
-    // Audio delivery score (50% weight if available)
     if (audioAnalysis && audioAnalysis.delivery_score > 0) {
       totalScore += audioAnalysis.delivery_score * 0.5;
       componentsCount += 0.5;
     }
 
-    // Calculate final score out of 100 (scores are already percentages 0-100)
     const finalScore = componentsCount > 0 ? Math.round(totalScore / componentsCount) : 0;
     
     return {
@@ -63,7 +59,6 @@ export default function InterviewAnalysisResults({
 
   return (
     <div className="space-y-6">
-      {/* Tab Navigation */}
       <div className="bg-card border border-border rounded-2xl shadow-xl p-2">
         <div className="flex gap-2">
           <button
@@ -99,12 +94,10 @@ export default function InterviewAnalysisResults({
         </div>
       </div>
 
-      {/* Overview Tab */}
       {activeTab === 'overview' && (
         <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
-          <h3 className="text-2xl font-bold text-foreground mb-6">📊 Overall Performance</h3>
+          <h3 className="text-2xl font-bold text-foreground mb-6">Overall Performance</h3>
 
-          {/* Final Score Display */}
           <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/30 rounded-2xl p-8 mb-6 text-center">
             <div className="text-sm text-muted-foreground mb-2">Final Interview Score</div>
             <div className={`text-7xl font-bold ${getScoreColor(finalScoreData.score)} mb-2`}>
@@ -120,11 +113,10 @@ export default function InterviewAnalysisResults({
             </div>
           </div>
 
-          {/* Score Breakdown */}
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             {attentionMetrics && (
               <div className="bg-secondary/50 rounded-xl p-6">
-                <h4 className="font-bold text-foreground mb-4">👁️ Attention Component</h4>
+                <h4 className="font-bold text-foreground mb-4">Attention Component</h4>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Average Attention</span>
@@ -141,7 +133,7 @@ export default function InterviewAnalysisResults({
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Focus Status</span>
                     <span className="text-lg">
-                      {attentionMetrics.isDistracted ? '⚠️ Distracted' : '✅ Focused'}
+                      {attentionMetrics.isDistracted ? 'Distracted' : 'Focused'}
                     </span>
                   </div>
                 </div>
@@ -175,7 +167,6 @@ export default function InterviewAnalysisResults({
             )}
           </div>
 
-          {/* Overall Feedback */}
           <div className="bg-primary/10 border border-primary/30 rounded-xl p-6">
             <h4 className="font-bold text-foreground mb-3">💡 Overall Feedback</h4>
             <ul className="space-y-2 text-muted-foreground">
@@ -208,7 +199,6 @@ export default function InterviewAnalysisResults({
         </div>
       )}
 
-      {/* Attention Analysis Tab */}
       {activeTab === 'attention' && attentionMetrics && (
         <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
           <h3 className="text-2xl font-bold text-foreground mb-6">👁️ Attention Analysis</h3>
@@ -280,7 +270,6 @@ export default function InterviewAnalysisResults({
         </div>
       )}
 
-      {/* Audio Analysis Tab */}
       {activeTab === 'audio' && audioAnalysis && (
         <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
           <h3 className="text-2xl font-bold text-foreground mb-6">🎤 Audio Delivery Analysis</h3>
@@ -365,10 +354,9 @@ export default function InterviewAnalysisResults({
         </div>
       )}
 
-      {/* Transcript Display */}
       {transcript && transcript.length > 0 && (
         <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
-          <h3 className="text-2xl font-bold text-foreground mb-6">📝 Your Transcript</h3>
+          <h3 className="text-2xl font-bold text-foreground mb-6">Your Transcript</h3>
           
           <div className="bg-secondary/50 rounded-xl p-6 mb-4">
             <div className="text-sm text-muted-foreground mb-2">

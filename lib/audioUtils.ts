@@ -1,8 +1,4 @@
 /**
- * Audio Extraction and Processing Utilities
- */
-
-/**
  * Extract audio from video blob as WAV format
  * @param videoBlob - The recorded video blob
  * @returns Audio blob in WAV format suitable for analysis
@@ -10,14 +6,13 @@
 export async function extractAudioFromVideo(videoBlob: Blob): Promise<Blob> {
   const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
   
-  // Convert blob to array buffer
   const arrayBuffer = await videoBlob.arrayBuffer();
   
-  // Decode audio data
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
   
-  // Convert to WAV format (mono, 16kHz for analysis)
   const wavBlob = await audioBufferToWav(audioBuffer, 16000);
+  
+  await audioContext.close();
   
   return wavBlob;
 }
@@ -28,18 +23,15 @@ export async function extractAudioFromVideo(videoBlob: Blob): Promise<Blob> {
  * @param targetSampleRate - Target sample rate (16000 recommended for speech)
  */
 async function audioBufferToWav(buffer: AudioBuffer, targetSampleRate: number = 16000): Promise<Blob> {
-  const numberOfChannels = 1; // Mono for speech analysis
+  const numberOfChannels = 1; 
   const originalSampleRate = buffer.sampleRate;
   
-  // Get channel data and downsample if needed
-  let channelData = buffer.getChannelData(0) as Float32Array; // Get first channel
+  let channelData = buffer.getChannelData(0) as Float32Array; 
   
-  // Downsample if necessary
   if (originalSampleRate !== targetSampleRate) {
     channelData = downsampleBuffer(channelData, originalSampleRate, targetSampleRate);
   }
   
-  // Convert to 16-bit PCM
   const length = channelData.length;
   const buffer16 = new Int16Array(length);
   
@@ -48,14 +40,10 @@ async function audioBufferToWav(buffer: AudioBuffer, targetSampleRate: number = 
     buffer16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
   }
   
-  // Create WAV file
   const wavData = encodeWAV(buffer16, targetSampleRate, numberOfChannels);
   return new Blob([wavData], { type: 'audio/wav' });
 }
 
-/**
- * Simple downsampling
- */
 function downsampleBuffer(buffer: Float32Array, fromSampleRate: number, toSampleRate: number): Float32Array {
   if (fromSampleRate === toSampleRate) {
     return buffer;
@@ -86,9 +74,6 @@ function downsampleBuffer(buffer: Float32Array, fromSampleRate: number, toSample
   return result;
 }
 
-/**
- * Encode PCM data as WAV
- */
 function encodeWAV(samples: Int16Array, sampleRate: number, numChannels: number): ArrayBuffer {
   const bytesPerSample = 2;
   const blockAlign = numChannels * bytesPerSample;
@@ -96,34 +81,20 @@ function encodeWAV(samples: Int16Array, sampleRate: number, numChannels: number)
   const buffer = new ArrayBuffer(44 + samples.length * bytesPerSample);
   const view = new DataView(buffer);
   
-  // RIFF identifier
   writeString(view, 0, 'RIFF');
-  // File length
   view.setUint32(4, 36 + samples.length * bytesPerSample, true);
-  // RIFF type
   writeString(view, 8, 'WAVE');
-  // Format chunk identifier
   writeString(view, 12, 'fmt ');
-  // Format chunk length
   view.setUint32(16, 16, true);
-  // Sample format (PCM)
   view.setUint16(20, 1, true);
-  // Channel count
   view.setUint16(22, numChannels, true);
-  // Sample rate
   view.setUint32(24, sampleRate, true);
-  // Byte rate
   view.setUint32(28, sampleRate * blockAlign, true);
-  // Block align
   view.setUint16(32, blockAlign, true);
-  // Bits per sample
   view.setUint16(34, 16, true);
-  // Data chunk identifier
   writeString(view, 36, 'data');
-  // Data chunk length
   view.setUint32(40, samples.length * bytesPerSample, true);
   
-  // Write PCM samples
   const offset = 44;
   for (let i = 0; i < samples.length; i++) {
     view.setInt16(offset + i * 2, samples[i], true);
@@ -138,9 +109,6 @@ function writeString(view: DataView, offset: number, string: string) {
   }
 }
 
-/**
- * Send audio to analysis API
- */
 export async function analyzeAudio(audioBlob: Blob): Promise<AudioAnalysisResult> {
   const formData = new FormData();
   formData.append('audio', audioBlob, 'audio.wav');

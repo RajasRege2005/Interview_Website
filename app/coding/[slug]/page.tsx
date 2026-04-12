@@ -14,6 +14,7 @@ export default function ProblemDetailsPage() {
   
   const [problem, setProblem] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [url, setUrl] = useState('')
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -120,6 +121,14 @@ export default function ProblemDetailsPage() {
           </div>
         </div>
       )}
-    </div>
+      <div className="space-y-4">
+          <h3 className="text-xl font-semibold">Problem URL</h3>
+          <div className="grid gap-3">
+            <a href={problem.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              {problem.url}
+            </a>
+          </div>
+        </div>
+      </div>
   )
 }

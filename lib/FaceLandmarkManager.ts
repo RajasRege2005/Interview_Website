@@ -2,7 +2,6 @@
 
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 
-// Suppress TensorFlow/XNNPACK console messages globally
 if (typeof window !== 'undefined') {
   const originalConsoleLog = console.log;
   const originalConsoleInfo = console.info;
@@ -44,10 +43,6 @@ if (typeof window !== 'undefined') {
   };
 }
 
-/**
- * Singleton class to manage MediaPipe Face Landmark detection
- * Used for attention tracking and eye gaze detection
- */
 class FaceLandmarkManager {
   private static instance: FaceLandmarkManager = new FaceLandmarkManager();
   faceLandmarker!: FaceLandmarker | null;
@@ -95,23 +90,19 @@ class FaceLandmarkManager {
   };
 
   detectLandmarks = (videoElement: HTMLVideoElement, time: number) => {
-    // Check if faceLandmarker is initialized and not null
     if (!this.faceLandmarker || !this.isInitialized) {
       return null;
     }
 
-    // Check if video element exists and is ready
     if (!videoElement || videoElement.readyState < 2) {
       return null;
     }
 
-    // Check if video has valid dimensions
     if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
       return null;
     }
 
     try {
-      // Ensure detectForVideo exists before calling
       if (typeof this.faceLandmarker.detectForVideo !== 'function') {
         console.error("detectForVideo method not available");
         return null;
@@ -120,7 +111,6 @@ class FaceLandmarkManager {
       const results = this.faceLandmarker.detectForVideo(videoElement, time);
       return results;
     } catch (error) {
-      // Silently handle common initialization errors
       if (error instanceof Error) {
         const errorMsg = error.message.toLowerCase();
         if (!errorMsg.includes('not initialized') && 

@@ -16,7 +16,7 @@ export interface AttentionMetrics {
 interface AttentionTrackerProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   isActive: boolean;
-  showUI?: boolean; // Whether to show the UI (default: true)
+  showUI?: boolean; 
   onMetricsUpdate?: (metrics: AttentionMetrics) => void;
 }
 
@@ -46,18 +46,17 @@ export default function AttentionTracker({
   const totalFramesRef = useRef(0);
   const noFaceFramesRef = useRef(0);
   
-  // More sensitive thresholds
-  const EAR_EXCELLENT = 0.75;  // Wide open eyes
-  const EAR_GOOD = 0.50;       // Normal open eyes
-  const EAR_DROWSY = 0.30;     // Partially closed
-  const EAR_CLOSED = 0.20;     // Very closed/sleeping
+  const EAR_EXCELLENT = 0.75;  
+  const EAR_GOOD = 0.50;       
+  const EAR_DROWSY = 0.30;     
+  const EAR_CLOSED = 0.20;    
   
-  const GAZE_EXCELLENT = 0.3;  // Looking straight at camera
-  const GAZE_GOOD = 0.6;       // Minor eye movement
-  const GAZE_DISTRACTED = 0.9; // Noticeable looking away
-  const GAZE_AWAY = 1.2;       // Clearly looking elsewhere
+  const GAZE_EXCELLENT = 0.3;  
+  const GAZE_GOOD = 0.6;      
+  const GAZE_DISTRACTED = 0.9; 
+  const GAZE_AWAY = 1.2;       
   
-  const SUSTAINED_THRESHOLD = 1000;  // 1 second for sustained issues
+  const SUSTAINED_THRESHOLD = 1000;  
 
   const animate = () => {
     if (!isActive || !videoRef.current) {
@@ -65,7 +64,6 @@ export default function AttentionTracker({
       return;
     }
 
-    // Check if video is playing and has loaded
     if (videoRef.current.readyState < 2 || videoRef.current.paused) {
       requestRef.current = requestAnimationFrame(animate);
       return;
@@ -77,10 +75,8 @@ export default function AttentionTracker({
       try {
         const faceLandmarkManager = FaceLandmarkManager.getInstance();
         
-        // Use performance.now() for MediaPipe timestamps
         const timestamp = performance.now();
         
-        // Ensure we don't process the same frame twice
         if (timestamp - lastTimestampRef.current < 16) { // ~60fps
           requestRef.current = requestAnimationFrame(animate);
           return;
@@ -92,20 +88,16 @@ export default function AttentionTracker({
           timestamp
         );
 
-        // Track total frames processed
         totalFramesRef.current++;
         
-        // Default values for when no face is detected
         let attentionScore = 0;
         let earScore = 0;
         let gazeScore = 0;
         let isAsleep = false;
         let lookingAway = false;
-        let isDistracted = true; // If no face, they're distracted
+        let isDistracted = true; 
 
         if (landmarks && landmarks.faceBlendshapes && landmarks.faceBlendshapes.length > 0) {
-          // Face detected - calculate metrics
-          // Extract eye blend shapes
           const blendshapes = landmarks.faceBlendshapes[0].categories;
           
           const eyeLookUpLeft = blendshapes.find(s => s.categoryName === "eyeLookUpLeft")?.score ?? 0;
@@ -117,16 +109,13 @@ export default function AttentionTracker({
           const eyeLookOutLeft = blendshapes.find(s => s.categoryName === "eyeLookOutLeft")?.score ?? 0;
           const eyeLookOutRight = blendshapes.find(s => s.categoryName === "eyeLookOutRight")?.score ?? 0;
           
-          // Eye blink detection
           const eyeBlinkLeft = blendshapes.find(s => s.categoryName === "eyeBlinkLeft")?.score ?? 0;
           const eyeBlinkRight = blendshapes.find(s => s.categoryName === "eyeBlinkRight")?.score ?? 0;
 
-          // Calculate EAR (Eye Aspect Ratio) - lower means eyes closing
           const earLeft = 1 - eyeBlinkLeft;
           const earRight = 1 - eyeBlinkRight;
           earScore = (earLeft + earRight) / 2;
 
-          // Calculate Gaze Score (weighted sum of eye movements)
           const weights = {
             upLeft: 1, upRight: 1,
             downLeft: 1, downRight: 1,
@@ -144,48 +133,34 @@ export default function AttentionTracker({
             weights.outLeft * eyeLookOutLeft +
             weights.outRight * eyeLookOutRight;
 
-          // Calculate attention score with gradual penalties (0-100)
           attentionScore = 100;
           
-          // Eye closure penalties (gradual based on how closed)
           if (earScore >= EAR_EXCELLENT) {
-            // Perfect - no penalty
           } else if (earScore >= EAR_GOOD) {
-            // Slightly squinting - minor penalty
             attentionScore -= 10;
           } else if (earScore >= EAR_DROWSY) {
-            // Drowsy, partially closed - moderate penalty
             attentionScore -= 30;
           } else if (earScore >= EAR_CLOSED) {
-            // Very closed eyes - heavy penalty
             attentionScore -= 60;
             isAsleep = true;
           } else {
-            // Eyes completely closed - maximum penalty
             attentionScore -= 80;
             isAsleep = true;
           }
           
-          // Gaze direction penalties (gradual based on how far away)
           if (gazeScore <= GAZE_EXCELLENT) {
-            // Perfect eye contact - no penalty
           } else if (gazeScore <= GAZE_GOOD) {
-            // Minor eye movement - small penalty
             attentionScore -= 10;
           } else if (gazeScore <= GAZE_DISTRACTED) {
-            // Noticeably distracted - moderate penalty
             attentionScore -= 25;
           } else if (gazeScore <= GAZE_AWAY) {
-            // Looking away - heavy penalty
             attentionScore -= 45;
             lookingAway = true;
           } else {
-            // Clearly looking elsewhere - maximum penalty
             attentionScore -= 60;
             lookingAway = true;
           }
           
-          // Track sustained issues for state flags
           const now = Date.now();
           
           if (earScore < EAR_DROWSY) {
@@ -210,22 +185,17 @@ export default function AttentionTracker({
             lookingAway = false;
           }
           
-          // Overall distraction flag
           isDistracted = isAsleep || lookingAway || (earScore < EAR_GOOD) || (gazeScore > GAZE_GOOD);
           
-          // Ensure score stays in valid range
           attentionScore = Math.max(0, Math.min(100, attentionScore));
         } else {
-          // No face detected - count as no attention
           noFaceFramesRef.current++;
           attentionScore = 0;
           isDistracted = true;
         }
 
-        // ALWAYS track attention (whether face detected or not)
         attentionHistoryRef.current.push(attentionScore);
         
-        // Keep reasonable history size
         if (attentionHistoryRef.current.length > 300) { // ~5 seconds at 60fps
           attentionHistoryRef.current.shift();
         }
@@ -277,7 +247,6 @@ export default function AttentionTracker({
     };
   }, [isActive, videoRef.current]);
 
-  // Don't render UI if showUI is false (collecting metrics silently)
   if (!showUI) {
     return null;
   }
@@ -286,7 +255,6 @@ export default function AttentionTracker({
     <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4 space-y-3">
       <h3 className="text-lg font-bold text-foreground mb-3">👁️ Attention Metrics</h3>
       
-      {/* Status Indicators */}
       <div className="flex flex-wrap gap-2">
         {metrics.isAsleep && (
           <span className="px-3 py-1 bg-red-500/20 text-red-500 border border-red-500/30 rounded-full text-sm font-semibold">
@@ -310,7 +278,6 @@ export default function AttentionTracker({
         )}
       </div>
 
-      {/* Metrics Grid */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-secondary/50 rounded-lg p-3">
           <div className="text-xs text-muted-foreground mb-1">Attention Score</div>
@@ -345,7 +312,6 @@ export default function AttentionTracker({
         </div>
       </div>
 
-      {/* Progress Bar */}
       <div className="mt-3">
         <div className="flex justify-between text-xs text-muted-foreground mb-1">
           <span>Overall Attention</span>
