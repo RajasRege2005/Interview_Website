@@ -71,7 +71,7 @@ export default function ReportsPage() {
                 
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Overall Score</span>
+                    <span className="text-sm text-muted-foreground">Overall Score: </span>
                     <span className="text-2xl font-bold text-foreground font-mono">{report.score}%</span>
                   </div>
                 </div>
