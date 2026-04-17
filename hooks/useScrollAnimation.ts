@@ -14,7 +14,7 @@ export function useScrollAnimation() {
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true)
-          observer.disconnect() // stop observing after first trigger
+          observer.disconnect() 
         }
       },
       {
