@@ -27,15 +27,12 @@ export async function POST(request: NextRequest) {
     await writeFile(tempFilePath, buffer);
 
     try {
-      // Call Python analysis script
       const analysisResult = await analyzeAudioWithPython(tempFilePath);
       
-      // Clean up temp file
       await unlink(tempFilePath);
       
       return NextResponse.json(analysisResult);
     } catch (error) {
-      // Clean up temp file on error
       await unlink(tempFilePath).catch(() => {});
       throw error;
     }
@@ -48,20 +45,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * Call Python script for audio analysis
- */
 async function analyzeAudioWithPython(audioFilePath: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const scriptPath = join(process.cwd(), 'scripts', 'analyze_audio_whisper.py');
-    
-    // Use venv Python if it exists, otherwise use system Python
     const venvPythonPath = join(process.cwd(), 'venv', 'Scripts', 'python.exe');
     const pythonCommand = existsSync(venvPythonPath) ? venvPythonPath : 'python';
     
-    console.log('Using Python:', pythonCommand);
-    console.log('Script path:', scriptPath);
-    console.log('Audio file:', audioFilePath);
     
     const pythonProcess = spawn(pythonCommand, [scriptPath, audioFilePath]);
     
@@ -77,9 +66,6 @@ async function analyzeAudioWithPython(audioFilePath: string): Promise<any> {
     });
     
     pythonProcess.on('close', (code) => {
-      console.log('Python exit code:', code);
-      console.log('Python stdout:', outputData);
-      console.log('Python stderr:', errorData);
       
       if (code !== 0) {
         console.error('Python script error:', errorData);
