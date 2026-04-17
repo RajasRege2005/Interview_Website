@@ -56,7 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event);
       
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
         if (session?.user) {
@@ -90,12 +89,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
-    console.log('SignUp response:', { data, error });
 
     if (error) throw error;
     
     if (data.user) {
-      console.log('Setting user from signUp:', data.user);
       setUser({
         id: data.user.id,
         email: data.user.email!,
