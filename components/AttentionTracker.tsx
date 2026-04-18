@@ -77,7 +77,7 @@ export default function AttentionTracker({
         
         const timestamp = performance.now();
         
-        if (timestamp - lastTimestampRef.current < 16) { // ~60fps
+        if (timestamp - lastTimestampRef.current < 16) { 
           requestRef.current = requestAnimationFrame(animate);
           return;
         }
@@ -196,11 +196,10 @@ export default function AttentionTracker({
 
         attentionHistoryRef.current.push(attentionScore);
         
-        if (attentionHistoryRef.current.length > 300) { // ~5 seconds at 60fps
+        if (attentionHistoryRef.current.length > 300) { 
           attentionHistoryRef.current.shift();
         }
         
-        // Calculate average attention over ALL frames
         const avgAttention = attentionHistoryRef.current.reduce((a, b) => a + b, 0) / attentionHistoryRef.current.length;
 
         const newMetrics: AttentionMetrics = {
@@ -227,7 +226,6 @@ export default function AttentionTracker({
 
   useEffect(() => {
     if (isActive) {
-      // Small delay to ensure video is ready
       const timer = setTimeout(() => {
         requestRef.current = requestAnimationFrame(animate);
       }, 500);
