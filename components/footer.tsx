@@ -24,7 +24,6 @@ export function Footer() {
     <footer className="relative border-t border-border bg-card/30">
       <div className="mx-auto max-w-7xl px-6 py-16">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
-          {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10 border border-primary/20">
