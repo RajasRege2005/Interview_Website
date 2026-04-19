@@ -27,7 +27,7 @@ A high-level overview of the main workspace directories:
 - `/components` - Reusable React components including UI elements, interview/attention trackers, and layout wrappers.
 - `/contexts` - Global state and React contexts (e.g., AuthContext).
 - `/lib` - Core utility functions, Supabase client initialization, and analysis helpers.
-- `/scripts` - Python and TypeScript utility scripts for backend audio analysis and database seeding.
+- `/scripts` - Python (for audio analysis) and TypeScript (for question fetching) utility scripts for backend audio analysis and database seeding.
 
 ## 💻 Getting Started
 
