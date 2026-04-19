@@ -82,9 +82,9 @@ class FaceLandmarkManager {
       );
       
       this.isInitialized = true;
-      console.log("✅ FaceLandmarker initialized successfully");
+      console.log("FaceLandmarker initialized successfully");
     } catch (error) {
-      console.error("❌ Failed to initialize FaceLandmarker:", error);
+      console.error("Failed to initialize FaceLandmarker:", error);
       this.faceLandmarker = null;
     }
   };
