@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { extractAudioFromVideo, analyzeAudio, AudioAnalysisResult } from '@/lib/audioUtils'
+import { supabase } from '@/lib/supabase'
 import AttentionTracker, { AttentionMetrics } from '@/components/AttentionTracker'
 import TranscriptCapture from '@/components/TranscriptCapture'
 import InterviewAnalysisResults from '@/components/InterviewAnalysisResults'
@@ -298,7 +299,64 @@ function InterviewSessionContent() {
     }
   }
 
+  const hasSavedRef = useRef(false);
 
+  useEffect(() => {
+    if (sessionPhase === 'completed' && analysisResult && attentionMetrics && user && !hasSavedRef.current) {
+      hasSavedRef.current = true;
+      const saveInterviewData = async () => {
+        try {
+          let totalScore = 0;
+          let componentsCount = 0;
+
+          if (attentionMetrics) {
+            totalScore += attentionMetrics.avgAttention * 0.5;
+            componentsCount += 0.5;
+          }
+
+          if (analysisResult && analysisResult.delivery_score > 0) {
+            totalScore += analysisResult.delivery_score * 0.5;
+            componentsCount += 0.5;
+          }
+
+          const finalScore = componentsCount > 0 ? Math.round(totalScore / componentsCount) : 0;
+          const speechScore = analysisResult ? analysisResult.delivery_score : 0;
+          const confidenceScore = attentionMetrics ? Math.round(attentionMetrics.avgAttention) : 0;
+
+          const { data: sessionData, error: sessionErr } = await supabase
+            .from('interview_sessions')
+            .insert({
+              user_id: user.id,
+              category,
+              question: currentQuestion,
+              transcript: liveTranscript,
+              ai_analysis: JSON.stringify(analysisResult)
+            })
+            .select('id')
+            .single();
+
+          if (sessionErr) throw sessionErr;
+
+          if (sessionData) {
+            await supabase
+              .from('interview_reports')
+              .insert({
+                session_id: sessionData.id,
+                user_id: user.id,
+                overall_score: finalScore,
+                speech_score: speechScore,
+                content_score: 0,
+                confidence_score: confidenceScore,
+                feedback: 'Interview analysis completed successfully.'
+              });
+          }
+        } catch (error) {
+          console.error("Failed to save interview session:", error);
+        }
+      }
+      saveInterviewData();
+    }
+  }, [sessionPhase, analysisResult, attentionMetrics, user, category, currentQuestion, liveTranscript]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
