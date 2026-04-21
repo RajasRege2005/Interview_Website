@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import DashboardChart from "@/components/DashboardChart";
 
 interface InterviewRecord {
   id: string;
@@ -73,13 +74,40 @@ export default function DashboardPage() {
   const avgOverall = completedInterviews.length 
     ? Math.round(completedInterviews.reduce((acc, curr) => acc + (curr.reports[0].overall_score || 0), 0) / completedInterviews.length)
     : 0;
+  const avgSpeech = completedInterviews.length
+    ? Math.round(completedInterviews.reduce((acc, curr) => acc + (curr.reports[0].speech_score || 0), 0) / completedInterviews.length)
+    : 0;
+  const avgConfidence = completedInterviews.length
+    ? Math.round(completedInterviews.reduce((acc, curr) => acc + (curr.reports[0].confidence_score || 0), 0) / completedInterviews.length)
+    : 0;
+  const chartData = completedInterviews
+    .slice(0, 6)
+    .reverse()
+    .map((record) => ({
+      name: new Date(record.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      score: Math.round(record.reports[0].overall_score || 0),
+    }));
 
   return (
-    <div className="container mx-auto p-4 md:p-8 space-y-8 pt-20">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Your Dashboard</h1>
-        <p className="text-muted-foreground">Track your interview practice progress and performance.</p>
+    <div className="container mx-auto space-y-8 px-4 pb-12 pt-20 md:px-8">
+      <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card/60 p-6 shadow-[0_24px_80px_-50px_rgba(14,165,233,0.4)] md:p-8">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.12),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(20,184,166,0.12),transparent_30%)]" />
+        <div className="relative flex flex-col gap-2">
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Your Dashboard</h1>
+          <p className="max-w-2xl text-muted-foreground">
+            Track interview practice progress with a visual summary of recent performance, completed sessions, and score balance.
+          </p>
+        </div>
       </div>
+
+      <DashboardChart
+        data={chartData}
+        averageOverall={avgOverall}
+        completedCount={completedInterviews.length}
+        totalCount={records.length}
+        speechScore={avgSpeech}
+        confidenceScore={avgConfidence}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
