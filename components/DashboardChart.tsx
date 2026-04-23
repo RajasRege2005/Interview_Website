@@ -5,14 +5,13 @@ import {
   ArrowUpRight,
   BarChart3,
   ChevronRight,
-  PieChart as PieChartIcon,
   TrendingUp,
 } from 'lucide-react';
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
   Cell,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   XAxis,
@@ -51,11 +50,19 @@ export default function DashboardChart({
   speechScore,
   confidenceScore,
 }: DashboardChartProps) {
-  const safeData = data.length > 0 ? data : [{ name: 'No data', score: 0 }];
-  const latestScore = safeData[safeData.length - 1]?.score ?? 0;
-  const previousScore = safeData[safeData.length - 2]?.score ?? latestScore;
+  const hasChartData = data.length > 0;
+  const safeData = hasChartData ? data : [{ name: 'No data', score: 0 }];
+  const latestScore = hasChartData ? data[data.length - 1]?.score ?? 0 : 0;
+  const previousScore = hasChartData ? data[data.length - 2]?.score ?? latestScore : latestScore;
   const trendDelta = latestScore - previousScore;
   const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const bestScore = hasChartData ? Math.max(...data.map((item) => item.score)) : 0;
+  const trendTone = trendDelta >= 0 ? 'text-emerald-400' : 'text-rose-400';
+  const metricRows = [
+    { name: 'Overall', value: averageOverall, fill: 'hsl(var(--primary))' },
+    { name: 'Speech', value: speechScore, fill: 'hsl(174 68% 42%)' },
+    { name: 'Confidence', value: confidenceScore, fill: 'hsl(38 92% 57%)' },
+  ];
   const balanceData = [
     { name: 'overall', value: averageOverall, fill: 'hsl(var(--primary))' },
     { name: 'speech', value: speechScore, fill: 'hsl(174 68% 42%)' },
@@ -65,7 +72,7 @@ export default function DashboardChart({
   const scoreChartConfig = {
     score: {
       label: 'Interview score',
-      color: 'hsl(var(--primary))',
+      color: 'hsl(142 72% 45%)',
     },
   };
 
@@ -111,7 +118,7 @@ export default function DashboardChart({
             </div>
             <div className="rounded-2xl border border-border/60 bg-background/40 px-4 py-3 backdrop-blur-sm">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1 text-emerald-400">
+                <span className={`inline-flex items-center gap-1 ${trendTone}`}>
                   <ArrowUpRight className="h-4 w-4" />
                   {trendDelta >= 0 ? '+' : ''}{trendDelta}%
                 </span>
@@ -129,14 +136,18 @@ export default function DashboardChart({
             </div>
 
             <ChartContainer config={scoreChartConfig} className="h-[300px] w-full aspect-auto">
-              <BarChart data={safeData} margin={{ top: 18, right: 8, left: -10, bottom: 0 }}>
+              <LineChart data={safeData} margin={{ top: 18, right: 10, left: -10, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="scoreFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-score)" stopOpacity={0.95} />
-                    <stop offset="95%" stopColor="var(--color-score)" stopOpacity={0.18} />
+                  <linearGradient id="scoreStroke" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="hsl(142 75% 48%)" />
+                    <stop offset="100%" stopColor="hsl(153 75% 38%)" />
+                  </linearGradient>
+                  <linearGradient id="scoreArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(142 75% 48%)" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="hsl(142 75% 48%)" stopOpacity={0.03} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <CartesianGrid vertical={false} strokeDasharray="0" stroke="hsl(var(--border) / 0.5)" />
                 <XAxis
                   dataKey="name"
                   axisLine={false}
@@ -161,22 +172,31 @@ export default function DashboardChart({
                     />
                   }
                 />
-                <Bar
+                <Line
                   dataKey="score"
-                  fill="url(#scoreFill)"
-                  radius={[10, 10, 0, 0]}
-                  maxBarSize={64}
+                  type="monotone"
+                  stroke="url(#scoreStroke)"
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 4, strokeWidth: 0, fill: 'hsl(142 75% 48%)' }}
+                  fill="url(#scoreArea)"
+                  fillOpacity={1}
                 />
-                <ChartLegend content={<ChartLegendContent />} />
-              </BarChart>
+              </LineChart>
             </ChartContainer>
+
+            {!hasChartData && (
+              <div className="rounded-xl border border-dashed border-border/70 bg-background/20 px-3 py-2 text-center text-sm text-muted-foreground">
+                Complete an interview analysis to populate this chart.
+              </div>
+            )}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
             {[
-              { label: 'Best session', value: `${Math.max(...safeData.map((item) => item.score))}%` },
+              { label: 'Best session', value: `${bestScore}%` },
               { label: 'Latest score', value: `${latestScore}%` },
-              { label: 'Sessions tracked', value: `${safeData.length}` },
+              { label: 'Sessions tracked', value: `${data.length}` },
             ].map((item) => (
               <div key={item.label} className="rounded-2xl border border-border/60 bg-background/40 p-4">
                 <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{item.label}</div>
@@ -206,7 +226,7 @@ export default function DashboardChart({
                 </div>
               </div>
               <div className="grid grid-flow-col items-end gap-2">
-                {safeData.slice(-4).map((point) => {
+                {data.slice(-4).map((point) => {
                   const height = Math.max(18, point.score * 0.8);
                   return (
                     <div key={`${point.name}-mini`} className="flex flex-col items-center gap-2">
@@ -218,6 +238,10 @@ export default function DashboardChart({
                     </div>
                   );
                 })}
+
+                {!hasChartData && (
+                  <div className="text-xs text-muted-foreground">No recent sessions</div>
+                )}
               </div>
             </div>
 
@@ -248,34 +272,50 @@ export default function DashboardChart({
             <ChevronRight className="mt-1 h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-5">
-            <ChartContainer config={balanceChartConfig} className="mx-auto h-[280px] w-full aspect-auto">
-              <PieChart>
-                <Pie
-                  data={balanceData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={72}
-                  outerRadius={96}
-                  paddingAngle={4}
-                  stroke="transparent"
-                >
-                  {balanceData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <ChartTooltip
-                  content={<ChartTooltipContent nameKey="name" formatter={(value, name) => [`${value}%`, String(name)]} />}
-                />
-                <ChartLegend content={<ChartLegendContent nameKey="name" />} />
-              </PieChart>
-            </ChartContainer>
+            <div className="relative">
+              <ChartContainer config={balanceChartConfig} className="mx-auto h-[280px] w-full aspect-auto">
+                <PieChart>
+                  <Pie
+                    data={balanceData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={72}
+                    outerRadius={96}
+                    paddingAngle={4}
+                    stroke="transparent"
+                  >
+                    {balanceData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip
+                    content={<ChartTooltipContent nameKey="name" formatter={(value, name) => [`${value}%`, String(name)]} />}
+                  />
+                </PieChart>
+              </ChartContainer>
+
+              <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+                <div className="rounded-xl bg-background/80 px-4 py-2 backdrop-blur-sm">
+                  <div className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Average</div>
+                  <div className="text-2xl font-semibold text-foreground">{averageOverall}%</div>
+                </div>
+              </div>
+            </div>
 
             <div className="space-y-3">
-              {balanceData.map((segment) => (
-                <div key={segment.name} className="flex items-center gap-3">
-                  <span className="h-4 w-2 rounded-full" style={{ backgroundColor: segment.fill }} />
-                  <span className="flex-1 text-sm text-muted-foreground">{segment.name}</span>
-                  <span className="text-sm font-semibold text-foreground">{segment.value}%</span>
+              {metricRows.map((segment) => (
+                <div key={segment.name} className="space-y-1">
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="h-4 w-2 rounded-full" style={{ backgroundColor: segment.fill }} />
+                    <span className="flex-1 text-muted-foreground">{segment.name}</span>
+                    <span className="font-semibold text-foreground">{segment.value}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted/60">
+                    <div
+                      className="h-2 rounded-full"
+                      style={{ width: `${segment.value}%`, backgroundColor: segment.fill }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
